@@ -126,7 +126,7 @@ export default function LandingPage() {
           </h2>
           <div className="grid md:grid-cols-3 gap-12 text-center md:text-left">
             <div>
-              <div className="text-4xl font-bold text-accent mb-4">1</div>
+              <div className="text-4xl font-bold text-accent mb-4 text-center">1</div>
               <h3 className="font-semibold text-lg text-gray-900 mb-2">
                 Tell us about the deal
               </h3>
@@ -136,7 +136,7 @@ export default function LandingPage() {
               </p>
             </div>
             <div>
-              <div className="text-4xl font-bold text-accent mb-4">2</div>
+              <div className="text-4xl font-bold text-accent mb-4 text-center">2</div>
               <h3 className="font-semibold text-lg text-gray-900 mb-2">
                 We generate your Signal
               </h3>
@@ -147,7 +147,7 @@ export default function LandingPage() {
               </p>
             </div>
             <div>
-              <div className="text-4xl font-bold text-accent mb-4">3</div>
+              <div className="text-4xl font-bold text-accent mb-4 text-center">3</div>
               <h3 className="font-semibold text-lg text-gray-900 mb-2">
                 Get honest answers
               </h3>
