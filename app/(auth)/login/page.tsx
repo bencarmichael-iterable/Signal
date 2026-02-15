@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -33,8 +34,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
-        <Link href="/" className="block text-2xl font-bold text-primary mb-8">
-          Signal
+        <Link href="/" className="block mb-8">
+          <Image src="/signal-v2-logo-teal-accent.svg" alt="Signal" width={160} height={40} className="h-8 w-auto" />
         </Link>
         <h1 className="text-2xl font-semibold text-gray-900 mb-2">
           Welcome back

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
   const [email, setEmail] = useState("");
@@ -11,20 +11,22 @@ export default function SignupPage() {
   const [fullName, setFullName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
   const supabase = createClient();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { full_name: fullName, company_name: companyName },
+        emailRedirectTo: `${typeof window !== "undefined" ? window.location.origin : ""}/auth/callback`,
       },
     });
 
@@ -34,15 +36,23 @@ export default function SignupPage() {
       return;
     }
 
-    router.push("/dashboard");
-    router.refresh();
+    // If we have a session, user is logged in (email confirmation disabled)
+    if (data.session) {
+      // Full page navigation ensures session cookies are sent with the next request
+      window.location.href = "/dashboard";
+      return;
+    }
+
+    // Email confirmation required - show success message instead of redirecting
+    setSuccess("Check your email to confirm your account. Then you can log in.");
+    setLoading(false);
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
-        <Link href="/" className="block text-2xl font-bold text-primary mb-8">
-          Signal
+        <Link href="/" className="block mb-8">
+          <Image src="/signal-v2-logo-teal-accent.svg" alt="Signal" width={160} height={40} className="h-8 w-auto" />
         </Link>
         <h1 className="text-2xl font-semibold text-gray-900 mb-2">
           Create your account
@@ -110,6 +120,9 @@ export default function SignupPage() {
           </div>
           {error && (
             <p className="text-sm text-red-600">{error}</p>
+          )}
+          {success && (
+            <p className="text-sm text-green-600">{success}</p>
           )}
           <button
             type="submit"

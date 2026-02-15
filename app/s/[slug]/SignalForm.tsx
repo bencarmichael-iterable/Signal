@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
 
 type Props = {
   signalId: string;
@@ -83,6 +85,9 @@ export default function SignalForm({
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
         <div className="max-w-md w-full text-center">
+          <Link href="/" className="inline-block mb-8">
+            <Image src="/signal-v2-logo-teal-accent.svg" alt="Signal" width={120} height={30} className="h-6 w-auto mx-auto" />
+          </Link>
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">
             Thanks {prospectName}
           </h1>
@@ -99,7 +104,10 @@ export default function SignalForm({
     <div className="min-h-screen bg-background">
       <div className="max-w-lg mx-auto px-4 py-8 sm:py-12">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 flex flex-col gap-2">
+          <Link href="/" className="block w-fit">
+            <Image src="/signal-v2-logo-teal-accent.svg" alt="Signal" width={120} height={30} className="h-6 w-auto" />
+          </Link>
           <p className="text-sm text-gray-500">
             {repName}
             {repCompany && ` · ${repCompany}`}
@@ -176,7 +184,10 @@ export default function SignalForm({
 
         {/* Footer */}
         <div className="mt-16 pt-8 border-t border-gray-200 text-center">
-          <p className="text-xs text-gray-400">Powered by Signal</p>
+          <Link href="/" className="inline-block">
+            <Image src="/signal-v2-logo-teal-accent.svg" alt="Signal" width={80} height={20} className="h-4 w-auto opacity-70 mx-auto" />
+          </Link>
+          <p className="text-xs text-gray-400 mt-2">Powered by Signal</p>
         </div>
       </div>
     </div>

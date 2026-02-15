@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="400" height="100">
+  <!-- Broadcast antenna - teal head, navy waves -->
+  
+  <!-- Antenna stick -->
+  <rect x="38" y="48" width="6" height="28" rx="3" fill="#1E3A5F"/>
+  
+  <!-- Antenna head - teal accent -->
+  <circle cx="41" cy="40" r="9" fill="#4ECDC4"/>
+  
+  <!-- Left waves - navy -->
+  <path d="M 25 29 A 20 20 0 0 1 25 51" stroke="#1E3A5F" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M 15 21 A 32 32 0 0 1 15 59" stroke="#1E3A5F" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.5"/>
+  
+  <!-- Right waves - navy -->
+  <path d="M 57 29 A 20 20 0 0 0 57 51" stroke="#1E3A5F" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M 67 21 A 32 32 0 0 0 67 59" stroke="#1E3A5F" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.5"/>
+  
+  <!-- Wordmark -->
+  <text x="95" y="66" font-family="'Inter', 'Helvetica Neue', Arial, sans-serif" font-size="48" font-weight="700" fill="#1E3A5F" letter-spacing="1">Signal</text>
+</svg>

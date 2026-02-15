@@ -1,5 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { notFound } from "next/navigation";
+import Link from "next/link";
+import Image from "next/image";
 import SignalForm from "./SignalForm";
 import type { Metadata } from "next";
 
@@ -37,6 +39,9 @@ export default async function SignalPage({
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="text-center">
+          <Link href="/" className="inline-block mb-8">
+            <Image src="/signal-v2-logo-teal-accent.svg" alt="Signal" width={160} height={40} className="h-8 w-auto mx-auto" />
+          </Link>
           <h1 className="text-xl font-semibold text-gray-900 mb-2">
             This page has expired
           </h1>
