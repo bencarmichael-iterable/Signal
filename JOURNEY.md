@@ -1,7 +1,9 @@
-# Signal — 9-Day Build Journey
+# Signal — 7-Day Build Journey
 
 **Start date:** _TBD_  
-**Target:** Ship in 9 days
+**Target:** Ship in 7 days
+
+> Deal recovery for sales teams. When prospects go dark, Signal generates a personalised micro-page to get honest feedback.
 
 ---
 
@@ -9,25 +11,29 @@
 
 - [x] Project folder created
 - [x] Git initialized
-- [ ] GitHub repository created & connected
-- [ ] Netlify site created & connected
-- [ ] First deploy to Netlify
+- [x] GitHub repository created & connected
+- [x] Netlify site created & connected
+- [x] First deploy to Netlify
 
 ---
 
-## Build Phases
+## Build Phases (from brief)
 
-| Day | Focus | Tasks | Status |
-|-----|-------|-------|--------|
-| 1 | _TBD_ | | ⏳ |
-| 2 | _TBD_ | | ⏳ |
-| 3 | _TBD_ | | ⏳ |
-| 4 | _TBD_ | | ⏳ |
-| 5 | _TBD_ | | ⏳ |
-| 6 | _TBD_ | | ⏳ |
-| 7 | _TBD_ | | ⏳ |
-| 8 | _TBD_ | | ⏳ |
-| 9 | _TBD_ | | ⏳ |
+| Day | Focus | Key Tasks | Status |
+|-----|-------|-----------|--------|
+| 1 | Foundation | Next.js, Tailwind, Supabase, DB schema, Auth | ✅ |
+| 2 | Signal Creation | Input form, OpenAI generation, preview, slug | ✅ |
+| 3 | Prospect Micro-Page | Public /s/{slug}, mobile-first, submit, thank-you | ✅ |
+| 4 | Response Handling | AI summary, notifications, event tracking | ⏳ |
+| 5 | Dashboard | List view, detail view, empty states | ⏳ |
+| 6 | Stripe | Pricing page, Checkout, usage enforcement | ⏳ |
+| 7 | Polish + Deploy | Refine prompts, copy flow, testing, deploy | ⏳ |
+
+---
+
+## Locked Decisions
+
+See `DECISIONS.md` for full list. Key: carousel micro-page, rolling 30-day free tier, drafts allowed after 3 (upsell to publish), Iterable for rep email (explore later).
 
 ---
 
@@ -39,6 +45,6 @@ _Add reflections, blockers, and wins as you go._
 
 ## Quick Links
 
-- **GitHub:** _Add repo URL_
-- **Netlify:** _Add site URL_
-- **Production:** _Add live URL_
+- **GitHub:** https://github.com/bencarmichael-iterable/Signal
+- **Netlify:** _Add site URL when ready_
+- **Production:** _Add live URL when deployed_
