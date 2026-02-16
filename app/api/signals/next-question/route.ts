@@ -17,7 +17,7 @@ Rules:
 - One option should always let them indicate they're still interested
 
 Return JSON:
-- next_question: { question_text, options } or null if done
+- next_question: { question_text, options, multi_select?: boolean } or null if done. Use multi_select: true for "which apply?" style questions.
 - is_complete: boolean
 - open_field_prompt: (only if is_complete) short prompt for optional final comment`;
 

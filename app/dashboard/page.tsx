@@ -174,7 +174,7 @@ export default async function DashboardPage() {
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {signal.responses?.[0]?.ai_recommendation
                         ? formatRecommendation(signal.responses[0].ai_recommendation)
-                        : "—"}
+                        : "-"}
                     </td>
                     <td className="px-4 py-3">
                       <Link

@@ -29,7 +29,6 @@ export default async function SignalDetailPage({
       what_was_pitched,
       deal_stage_when_stalled,
       rep_hypothesis,
-      specific_context,
       generated_page_content,
       unique_slug,
       status,
@@ -116,12 +115,6 @@ export default async function SignalDetailPage({
                 <dd className="text-gray-900">{signal.rep_hypothesis}</dd>
               </div>
             )}
-            {signal.specific_context && (
-              <div>
-                <dt className="text-gray-500">Specific context</dt>
-                <dd className="text-gray-900">{signal.specific_context}</dd>
-              </div>
-            )}
           </dl>
         </div>
 
@@ -155,8 +148,24 @@ export default async function SignalDetailPage({
               <h2 className="font-medium text-gray-900 mb-4">
                 Prospect&apos;s responses
               </h2>
-              {typeof response.answers === "object" &&
-              !Array.isArray(response.answers) ? (
+              {Array.isArray(response.answers) ? (
+                <dl className="space-y-3">
+                  {response.answers.map(
+                    (item: { question?: string; answer?: string }, i: number) =>
+                      item?.answer ? (
+                        <div key={i}>
+                          <dt className="text-gray-500 text-sm font-medium">
+                            {item.question || `Q${i + 1}`}
+                          </dt>
+                          <dd className="text-gray-900 mt-0.5">
+                            {String(item.answer)}
+                          </dd>
+                        </div>
+                      ) : null
+                  )}
+                </dl>
+              ) : typeof response.answers === "object" &&
+                response.answers !== null ? (
                 <dl className="space-y-2">
                   {Object.entries(response.answers).map(([k, v]) =>
                     v ? (

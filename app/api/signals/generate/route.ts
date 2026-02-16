@@ -12,7 +12,7 @@ The tone must be:
 - Warm, human, and disarming
 - Zero sales pressure
 - Genuinely curious, not manipulative
-- Brief — respect the prospect's time
+- Brief - respect the prospect's time
 
 You will receive deal context from the sales rep. Generate a HIGHLY PERSONALISED first question that:
 - References specific details from the deal summary (company, solution, stage)
@@ -26,11 +26,15 @@ Generate:
 
 2. first_question: A single question object with:
    - question_text: The question (reference deal specifics - make it feel personal)
-   - options: 4-5 tap-to-select answer options (keep them short — 3-8 words each)
+   - options: 4-5 tap-to-select answer options (keep them short - 3-8 words each)
+   - multi_select: (optional) true when "which of these apply?" style - allows multiple selections
 
 3. open_field_prompt: A short, warm prompt for the optional open text field at the end.
 
-4. suggested_email: A 4-5 line email the rep can copy-paste. Written in first person. Include placeholder: [SIGNAL_LINK]
+4. suggested_email: A 4-6 line email the rep can copy-paste. Written in first person. Include placeholder: [SIGNAL_LINK]
+   - NEVER use "survey", "feedback form", or "questionnaire" - frame it as a quick, personal check-in or a way to share where things stand
+   - Explain the value for the prospect: e.g. so the rep can tailor follow-up (or step back), avoid irrelevant outreach, respect their timeline, save them from back-and-forth
+   - Keep it warm and human. The link should feel like a low-friction way for them to respond on their own terms
 
 Return ONLY valid JSON with these four keys. No markdown, no preamble.`;
 

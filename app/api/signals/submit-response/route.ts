@@ -103,7 +103,7 @@ ${typeof answers === "object"
 
     const { error: insertError } = await admin.from("responses").insert({
       signal_id: signalId,
-      answers: answersObj || answers,
+      answers: Array.isArray(answers) ? answers : answersObj || answers,
       ai_summary: analysis.summary,
       ai_recommendation: analysis.recommendation,
       opened_at: openedAt,

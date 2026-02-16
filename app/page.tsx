@@ -131,7 +131,7 @@ export default function LandingPage() {
                 Tell us about the deal
               </h3>
               <p className="text-gray-600">
-                You share the context — who the prospect is, what you pitched,
+                You share the context - who the prospect is, what you pitched,
                 where things went quiet. Takes 2 minutes.
               </p>
             </div>
@@ -153,7 +153,7 @@ export default function LandingPage() {
               </h3>
               <p className="text-gray-600">
                 Your prospect shares feedback in 45 seconds. You get an instant
-                summary: re-engage, pivot, or move on — with a recommended next
+                summary: re-engage, pivot, or move on - with a recommended next
                 step.
               </p>
             </div>
@@ -169,7 +169,7 @@ export default function LandingPage() {
             deals came back to life.&rdquo;
           </blockquote>
           <p className="mt-4 text-gray-500 text-sm">
-            — Early beta user, Enterprise AE
+            - Early beta user, Enterprise AE
           </p>
         </div>
       </section>

@@ -9,7 +9,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Signal — Know why they went quiet",
+  title: "Signal - Know why they went quiet",
   description:
     "Deal recovery for sales teams. When prospects go dark, Signal generates a personalised micro-page to get honest feedback.",
 };
