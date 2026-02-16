@@ -7,6 +7,9 @@ import Image from "next/image";
 type Props = {
   signalId: string;
   prospectName: string;
+  prospectCompany: string;
+  prospectWebsiteUrl: string | null;
+  prospectLogoUrl: string | null;
   introParagraph: string;
   questions: { question_text: string; options: string[] }[];
   openFieldPrompt: string;
@@ -17,6 +20,9 @@ type Props = {
 export default function SignalForm({
   signalId,
   prospectName,
+  prospectCompany,
+  prospectWebsiteUrl,
+  prospectLogoUrl,
   introParagraph,
   questions,
   openFieldPrompt,
@@ -103,11 +109,32 @@ export default function SignalForm({
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-lg mx-auto px-4 py-8 sm:py-12">
-        {/* Header */}
+        {/* Header - prospect branding or Signal logo */}
         <div className="mb-8 flex flex-col gap-2">
-          <Link href="/" className="block w-fit">
-            <Image src="/signal-v2-logo-teal-accent.svg" alt="Signal" width={120} height={30} className="h-6 w-auto" />
-          </Link>
+          {prospectWebsiteUrl ? (
+            <a
+              href={prospectWebsiteUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-fit"
+            >
+              {prospectLogoUrl ? (
+                <img
+                  src={prospectLogoUrl}
+                  alt={prospectCompany}
+                  className="h-8 w-auto max-w-[180px] object-contain object-left"
+                />
+              ) : (
+                <span className="text-lg font-semibold text-gray-900">
+                  {prospectCompany}
+                </span>
+              )}
+            </a>
+          ) : (
+            <Link href="/" className="block w-fit">
+              <Image src="/signal-v2-logo-teal-accent.svg" alt="Signal" width={120} height={30} className="h-6 w-auto" />
+            </Link>
+          )}
           <p className="text-sm text-gray-500">
             {repName}
             {repCompany && ` · ${repCompany}`}

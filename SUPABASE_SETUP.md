@@ -1,14 +1,14 @@
 # Supabase Setup for Signal
 
-## 1. Run the database migration
+## 1. Run the database migrations
 
 1. Go to your [Supabase Dashboard](https://supabase.com/dashboard)
 2. Select your project
 3. Open **SQL Editor**
-4. Copy the contents of `supabase/migrations/001_initial_schema.sql`
-5. Paste and run it
-
-This creates the `users`, `signals`, `responses`, and `signal_events` tables, plus RLS policies and the auth trigger.
+4. Run migrations in order:
+   - `supabase/migrations/001_initial_schema.sql` — creates tables, RLS, auth trigger
+   - `supabase/migrations/002_signal_form_fields.sql` — adds speaking_duration, last_contact_ago, what_rep_wants_to_learn to signals
+   - `supabase/migrations/003_prospect_branding.sql` — adds prospect_website_url, prospect_logo_url for micro-page branding
 
 ## 2. Configure Auth (optional)
 

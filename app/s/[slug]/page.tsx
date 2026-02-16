@@ -22,6 +22,9 @@ export default async function SignalPage({
     .select(`
       id,
       prospect_first_name,
+      prospect_company,
+      prospect_website_url,
+      prospect_logo_url,
       generated_page_content,
       expires_at,
       status,
@@ -68,6 +71,9 @@ export default async function SignalPage({
     <SignalForm
       signalId={signal.id}
       prospectName={signal.prospect_first_name}
+      prospectCompany={signal.prospect_company}
+      prospectWebsiteUrl={signal.prospect_website_url}
+      prospectLogoUrl={signal.prospect_logo_url}
       introParagraph={content.intro_paragraph}
       questions={content.questions}
       openFieldPrompt={content.open_field_prompt}
