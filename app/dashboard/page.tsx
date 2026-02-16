@@ -9,8 +9,37 @@ const STATUS_COLORS: Record<string, string> = {
   expired: "bg-red-100 text-red-700",
 };
 
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+function formatLastActivity(date: Date) {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "today";
+  if (diffDays === 1) return "yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  return `${Math.floor(diffDays / 30)} months ago`;
+}
+
 export default async function DashboardPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: profile } = await supabase
+    .from("users")
+    .select("full_name")
+    .eq("id", user!.id)
+    .single();
+
+  const firstName =
+    (profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || "")
+      .split(" ")[0] || "there";
+
   const { data: signals } = await supabase
     .from("signals")
     .select(`
@@ -24,10 +53,39 @@ export default async function DashboardPage() {
     `)
     .order("created_at", { ascending: false });
 
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const thisMonth = signals?.filter((s) => new Date(s.created_at) >= startOfMonth) ?? [];
+  const sentCount = thisMonth.filter((s) => ["sent", "opened", "completed"].includes(s.status)).length;
+  const completedCount = thisMonth.filter((s) => s.status === "completed").length;
+  const lastSignal = signals?.[0];
+  const lastActivity = lastSignal
+    ? formatLastActivity(new Date(lastSignal.created_at))
+    : null;
+
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Your Signals</h1>
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            {getGreeting()}, {firstName}
+          </h1>
+          <p className="text-gray-600 mt-1">
+            {!signals || signals.length === 0
+              ? "Create your first Signal to recover a stalled deal."
+              : `You have ${signals.length} Signal${signals.length === 1 ? "" : "s"}.`}
+          </p>
+          {lastActivity && (
+            <p className="text-gray-500 text-sm mt-0.5">
+              Last Signal created {lastActivity}.
+            </p>
+          )}
+          {signals && signals.length > 0 && (sentCount > 0 || completedCount > 0) && (
+            <p className="text-gray-500 text-sm mt-0.5">
+              This month: {sentCount} sent, {completedCount} completed.
+            </p>
+          )}
+        </div>
         <Link
           href="/dashboard/new"
           className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90"
@@ -39,7 +97,7 @@ export default async function DashboardPage() {
       {!signals || signals.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
           <p className="text-gray-600 mb-4">
-            No Signals yet. Create your first one to recover a stalled deal.
+            No Signals yet. Ready to get back in touch with a prospect?
           </p>
           <Link
             href="/dashboard/new"

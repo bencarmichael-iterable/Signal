@@ -15,6 +15,12 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  const { data: profile } = await supabase
+    .from("users")
+    .select("full_name, photo_url")
+    .eq("id", user.id)
+    .single();
+
   return (
     <div className="min-h-screen bg-background">
       <nav className="bg-white border-b border-gray-200">
@@ -36,15 +42,40 @@ export default async function DashboardLayout({
               >
                 New Signal
               </Link>
-            </div>
-            <form action="/auth/signout" method="post">
-              <button
-                type="submit"
-                className="text-gray-600 hover:text-primary text-sm"
+              <Link
+                href="/dashboard/account"
+                className="text-gray-600 hover:text-primary"
               >
-                Sign out
-              </button>
-            </form>
+                Account
+              </Link>
+            </div>
+            <div className="flex items-center gap-4">
+              {profile?.photo_url ? (
+                <Link href="/dashboard/account" className="flex items-center">
+                  <img
+                    src={profile.photo_url}
+                    alt={profile.full_name || "Profile"}
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                </Link>
+              ) : (
+                <Link
+                  href="/dashboard/account"
+                  className="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center text-accent text-sm font-medium"
+                  title="Add profile photo"
+                >
+                  {(profile?.full_name || user.email)?.[0]?.toUpperCase() ?? "?"}
+                </Link>
+              )}
+              <form action="/auth/signout" method="post">
+                <button
+                  type="submit"
+                  className="text-gray-600 hover:text-primary text-sm"
+                >
+                  Sign out
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </nav>
