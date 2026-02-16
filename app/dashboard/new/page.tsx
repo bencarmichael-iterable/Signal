@@ -10,11 +10,5 @@ export default async function NewSignalPage() {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("users")
-    .select("company_name")
-    .eq("id", user.id)
-    .single();
-
-  return <NewSignalForm companyName={profile?.company_name ?? null} />;
+  return <NewSignalForm />;
 }

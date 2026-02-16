@@ -51,14 +51,9 @@ type FormData = {
   last_contact_ago: string;
   what_rep_wants_to_learn: string[];
   rep_hypothesis: string;
-  specific_context: string;
 };
 
-type Props = {
-  companyName: string | null;
-};
-
-export default function NewSignalForm({ companyName }: Props) {
+export default function NewSignalForm() {
   const [step, setStep] = useState<"form" | "preview" | "done">("form");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -73,7 +68,6 @@ export default function NewSignalForm({ companyName }: Props) {
     last_contact_ago: "",
     what_rep_wants_to_learn: [],
     rep_hypothesis: "",
-    specific_context: "",
   });
   const [generated, setGenerated] = useState<{
     intro_paragraph: string;
@@ -85,9 +79,7 @@ export default function NewSignalForm({ companyName }: Props) {
   const [link, setLink] = useState("");
   const [copied, setCopied] = useState(false);
 
-  const whatPitchedLabel = companyName
-    ? `Why is ${companyName} the best solution for the prospect?`
-    : "Why is your company the best solution for the prospect?";
+  const dealSummaryLabel = `Summarise the deal so far, including MEDDPICC, or any other findings you have. Outline why you feel your solution is the best fit for ${formData.prospect_company || "the prospect"}`;
 
   function toggleWantToLearn(value: string) {
     setFormData((p) => ({
@@ -224,22 +216,22 @@ export default function NewSignalForm({ companyName }: Props) {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {whatPitchedLabel} *
+              {dealSummaryLabel} *
             </label>
             <textarea
               required
-              rows={3}
+              rows={5}
               value={formData.what_was_pitched}
               onChange={(e) =>
                 setFormData((p) => ({ ...p, what_was_pitched: e.target.value }))
               }
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
-              placeholder="Our sales intelligence platform that helps teams close more deals..."
+              placeholder="Metrics identified, economic buyer, decision criteria, champion, competition..."
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Where did it stall? *
+              Where has the opportunity stalled? *
             </label>
             <select
               value={formData.deal_stage_when_stalled}
@@ -329,20 +321,6 @@ export default function NewSignalForm({ companyName }: Props) {
               }
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
               placeholder="Budget got cut, champion left, timing..."
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Anything specific you discussed? (optional)
-            </label>
-            <textarea
-              rows={2}
-              value={formData.specific_context}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, specific_context: e.target.value }))
-              }
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
-              placeholder="Pain points, quotes, topics from the conversation..."
             />
           </div>
           {error && <p className="text-red-600 text-sm">{error}</p>}

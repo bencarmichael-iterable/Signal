@@ -6,7 +6,7 @@ import { nanoid } from "nanoid";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const SYSTEM_PROMPT = `You are Signal, an AI that helps sales professionals understand why their prospects went quiet. Your job is to generate a personalised micro-page that a prospect will receive via a unique link.
+const SYSTEM_PROMPT = `You are Signal, an AI that helps sales professionals understand why their prospects went quiet. Your job is to generate the FIRST question for a personalised micro-page. More questions will be asked dynamically based on the prospect's answers.
 
 The tone must be:
 - Warm, human, and disarming
@@ -14,19 +14,23 @@ The tone must be:
 - Genuinely curious, not manipulative
 - Brief — respect the prospect's time
 
-You will receive deal context from the sales rep, including what they want to learn (e.g. did they choose a competitor, reason for delay, is it still active, why did we lose). Tailor your questions to surface these answers. Generate:
+You will receive deal context from the sales rep. Generate a HIGHLY PERSONALISED first question that:
+- References specific details from the deal summary (company, solution, stage)
+- Feels like it was written for this exact prospect
+- Uses tap-to-select options (no open text for this question)
+- One option should allow the prospect to indicate they're still interested
+
+Generate:
 
 1. intro_paragraph: 2-3 sentences using the prospect's first name, acknowledging the conversation went quiet, and setting expectations ("takes 45 seconds, no pitch, just curious"). Reference the specific deal context naturally.
 
-2. questions: An array of 3-4 questions. Each question has:
-   - question_text: The question itself (reference the deal specifics where possible)
+2. first_question: A single question object with:
+   - question_text: The question (reference deal specifics - make it feel personal)
    - options: 4-5 tap-to-select answer options (keep them short — 3-8 words each)
-   - One option should always allow the prospect to indicate they're still interested
-   - Prioritise questions that address what the rep wants to understand (competitor, delay reason, still active, why we lost)
 
-3. open_field_prompt: A short, warm prompt for the optional open text field.
+3. open_field_prompt: A short, warm prompt for the optional open text field at the end.
 
-4. suggested_email: A 4-5 line email the rep can copy-paste. Written in first person as if the rep is typing it. Must feel human, not AI-generated. Include a placeholder for the Signal link: [SIGNAL_LINK]
+4. suggested_email: A 4-5 line email the rep can copy-paste. Written in first person. Include placeholder: [SIGNAL_LINK]
 
 Return ONLY valid JSON with these four keys. No markdown, no preamble.`;
 
@@ -51,7 +55,6 @@ export async function POST(req: Request) {
       last_contact_ago,
       what_rep_wants_to_learn,
       rep_hypothesis,
-      specific_context,
     } = body;
 
     if (!prospect_first_name || !prospect_company || !what_was_pitched || !prospect_website_url) {
@@ -97,13 +100,12 @@ Prospect first name: ${prospect_first_name}
 Prospect company: ${prospect_company}
 Prospect website: ${prospect_website_url}
 ${prospect_logo_url ? `Prospect logo URL: ${prospect_logo_url}` : ""}
-What was pitched (why rep's company is best for prospect): ${what_was_pitched}
+Deal summary (MEDDPICC, findings, why solution is best fit): ${what_was_pitched}
 Deal stalled at: ${deal_stage_when_stalled}
 ${speaking_duration ? `How long they had been speaking: ${SPEAKING_LABELS[speaking_duration] || speaking_duration}` : ""}
 ${last_contact_ago ? `How long ago last contact: ${LAST_CONTACT_LABELS[last_contact_ago] || last_contact_ago}` : ""}
 ${wantsToLearnLabels ? `What rep wants to understand: ${wantsToLearnLabels}` : ""}
 ${rep_hypothesis ? `Rep's hypothesis: ${rep_hypothesis}` : ""}
-${specific_context ? `Specific context discussed: ${specific_context}` : ""}
 `;
 
     const completion = await openai.chat.completions.create({
@@ -121,11 +123,16 @@ ${specific_context ? `Specific context discussed: ${specific_context}` : ""}
       throw new Error("No content from OpenAI");
     }
 
-    const content = JSON.parse(contentStr) as {
+    const parsed = JSON.parse(contentStr) as {
       intro_paragraph: string;
-      questions: { question_text: string; options: string[] }[];
+      first_question: { question_text: string; options: string[] };
       open_field_prompt: string;
       suggested_email: string;
+    };
+    const content = {
+      ...parsed,
+      questions: [parsed.first_question],
+      dynamic: true,
     };
 
     const slug = nanoid(10);
@@ -164,7 +171,6 @@ ${specific_context ? `Specific context discussed: ${specific_context}` : ""}
           ? what_rep_wants_to_learn
           : null,
       rep_hypothesis: rep_hypothesis || null,
-      specific_context: specific_context || null,
       generated_page_content: content,
       unique_slug: slug,
       status: "created",

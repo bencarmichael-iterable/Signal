@@ -73,6 +73,20 @@ export default async function SignalDetailPage({
       </Link>
 
       <div className="max-w-2xl space-y-8">
+        {response?.ai_summary && (
+          <div className="bg-green-50 rounded-xl border border-green-200 p-6">
+            <h2 className="font-medium text-gray-900 mb-2">AI summary</h2>
+            <p className="text-gray-700">{response.ai_summary}</p>
+            {response.ai_recommendation && (
+              <p className="mt-3">
+                <span className="font-medium">Recommendation: </span>
+                {RECOMMENDATION_LABELS[response.ai_recommendation] ||
+                  response.ai_recommendation.replace(/_/g, " ")}
+              </p>
+            )}
+          </div>
+        )}
+
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
             {signal.prospect_first_name} @ {signal.prospect_company}
@@ -160,19 +174,6 @@ export default async function SignalDetailPage({
               )}
             </div>
 
-            {response.ai_summary && (
-              <div className="bg-green-50 rounded-xl border border-green-200 p-6">
-                <h2 className="font-medium text-gray-900 mb-2">AI summary</h2>
-                <p className="text-gray-700">{response.ai_summary}</p>
-                {response.ai_recommendation && (
-                  <p className="mt-3">
-                    <span className="font-medium">Recommendation: </span>
-                    {RECOMMENDATION_LABELS[response.ai_recommendation] ||
-                      response.ai_recommendation}
-                  </p>
-                )}
-              </div>
-            )}
           </>
         )}
       </div>

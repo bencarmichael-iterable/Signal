@@ -4,40 +4,52 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
+type Question = { question_text: string; options: string[] };
+
 type Props = {
   signalId: string;
+  slug?: string;
   prospectName: string;
   prospectCompany: string;
   prospectWebsiteUrl: string | null;
   prospectLogoUrl: string | null;
   introParagraph: string;
-  questions: { question_text: string; options: string[] }[];
+  initialQuestions: Question[];
   openFieldPrompt: string;
   repName: string;
   repCompany: string;
+  repEmail: string | null;
+  dynamic?: boolean;
 };
 
 export default function SignalForm({
   signalId,
+  slug,
   prospectName,
   prospectCompany,
   prospectWebsiteUrl,
   prospectLogoUrl,
   introParagraph,
-  questions,
+  initialQuestions,
   openFieldPrompt,
   repName,
   repCompany,
+  repEmail,
+  dynamic = false,
 }: Props) {
+  const [questions, setQuestions] = useState<Question[]>(initialQuestions);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [openText, setOpenText] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fetchingNext, setFetchingNext] = useState(false);
+  const [showOpenField, setShowOpenField] = useState(false);
+  const [finalOpenFieldPrompt, setFinalOpenFieldPrompt] = useState<string | null>(null);
 
   const currentQuestion = questions[step];
   const isLastQuestion = step === questions.length - 1;
-  const progress = ((step + 1) / questions.length) * 100;
+  const progress = ((step + 1) / Math.max(questions.length, 6)) * 100;
 
   useEffect(() => {
     fetch("/api/signals/track-open", {
@@ -51,10 +63,38 @@ export default function SignalForm({
     const newAnswers = { ...answers, [step]: option };
     setAnswers(newAnswers);
 
-    if (isLastQuestion) {
-      return;
+    if (dynamic && slug) {
+      setFetchingNext(true);
+      const answersArray = questions.slice(0, step + 1).map((q, i) => ({
+        question: q.question_text,
+        answer: i === step ? option : (newAnswers[i] ?? ""),
+      }));
+
+      try {
+        const res = await fetch("/api/signals/next-question", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ slug, answers: answersArray }),
+        });
+        const data = await res.json();
+
+        if (data.next_question && !data.is_complete) {
+          setQuestions((prev) => [...prev, data.next_question]);
+          setStep(step + 1);
+        } else {
+          if (data.open_field_prompt) setFinalOpenFieldPrompt(data.open_field_prompt);
+          setShowOpenField(true);
+        }
+      } catch {
+        setShowOpenField(true);
+      } finally {
+        setFetchingNext(false);
+      }
+    } else if (isLastQuestion) {
+      setShowOpenField(true);
+    } else {
+      setStep(step + 1);
     }
-    setStep(step + 1);
   }
 
   async function handleSubmit() {
@@ -62,11 +102,11 @@ export default function SignalForm({
 
     const allAnswers = questions.map((q, i) => ({
       question: q.question_text,
-      answer: answers[i] || "",
+      answer: answers[i] ?? "",
     }));
     if (openText.trim()) {
       allAnswers.push({
-        question: openFieldPrompt,
+        question: finalOpenFieldPrompt ?? openFieldPrompt,
         answer: openText.trim(),
       });
     }
@@ -91,16 +131,24 @@ export default function SignalForm({
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
         <div className="max-w-md w-full text-center">
-          <Link href="/" className="inline-block mb-8">
-            <Image src="/signal-v2-logo-teal-accent.svg" alt="Signal" width={120} height={30} className="h-6 w-auto mx-auto" />
+          <Link href="/" className="inline-block mb-10">
+            <Image src="/signal-v2-logo-teal-accent.svg" alt="Signal" width={200} height={50} className="h-12 w-auto mx-auto" />
           </Link>
           <h1 className="text-2xl font-semibold text-gray-900 mb-2">
             Thanks {prospectName}
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 mb-8">
             {repName} will appreciate the honesty. No follow-up unless you want
             one.
           </p>
+          {repEmail && (
+            <a
+              href={`mailto:${repEmail}`}
+              className="inline-flex items-center justify-center px-6 py-3 bg-accent text-white font-medium rounded-lg hover:bg-accent/90 transition-colors"
+            >
+              Email {repName}
+            </a>
+          )}
         </div>
       </div>
     );
@@ -157,29 +205,38 @@ export default function SignalForm({
         )}
 
         {/* Current question */}
-        <div className="mb-8">
-          <h2 className="text-xl font-medium text-gray-900 mb-6">
-            {currentQuestion.question_text}
-          </h2>
-          <div className="space-y-3">
-            {currentQuestion.options.map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => handleOptionSelect(option)}
-                className="w-full text-left px-5 py-4 rounded-xl border-2 border-gray-200 hover:border-accent hover:bg-accent/5 transition-all min-h-[48px] font-medium text-gray-800"
-              >
-                {option}
-              </button>
-            ))}
+        {currentQuestion && !showOpenField && (
+          <div className="mb-8">
+            <h2 className="text-xl font-medium text-gray-900 mb-6">
+              {currentQuestion.question_text}
+            </h2>
+            <div className="space-y-3">
+              {currentQuestion.options.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => handleOptionSelect(option)}
+                  disabled={fetchingNext}
+                  className="w-full text-left px-5 py-4 rounded-xl border-2 border-gray-200 hover:border-accent hover:bg-accent/5 transition-all min-h-[48px] font-medium text-gray-800 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+            {fetchingNext && (
+              <p className="mt-4 text-sm text-gray-500">Thinking...</p>
+            )}
           </div>
-        </div>
+        )}
 
         {/* Open text (after last question) */}
-        {isLastQuestion && answers[step] !== undefined && (
+        {(showOpenField || (isLastQuestion && answers[step] !== undefined)) && (
           <div className="mb-8">
+            {showOpenField && (
+              <p className="text-gray-600 mb-4">Thanks for your answers.</p>
+            )}
             <label className="block text-gray-700 font-medium mb-2">
-              {openFieldPrompt}
+              {finalOpenFieldPrompt ?? openFieldPrompt}
             </label>
             <textarea
               value={openText}

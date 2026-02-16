@@ -43,7 +43,6 @@ export async function POST(req: Request) {
         what_was_pitched,
         deal_stage_when_stalled,
         rep_hypothesis,
-        specific_context,
         generated_page_content
       `)
       .eq("id", signalId)
@@ -73,7 +72,6 @@ Deal context:
 - What was pitched: ${signal.what_was_pitched}
 - Where it stalled: ${signal.deal_stage_when_stalled}
 ${signal.rep_hypothesis ? `- Rep's hypothesis: ${signal.rep_hypothesis}` : ""}
-${signal.specific_context ? `- Specific context: ${signal.specific_context}` : ""}
 
 Prospect's answers:
 ${typeof answers === "object"

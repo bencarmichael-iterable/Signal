@@ -10,10 +10,29 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function getGreeting() {
-  const hour = new Date().getHours();
+  const hour = parseInt(
+    new Intl.DateTimeFormat("en-AU", {
+      timeZone: "Australia/Sydney",
+      hour: "numeric",
+      hour12: false,
+    }).format(new Date()),
+    10
+  );
   if (hour < 12) return "Good morning";
   if (hour < 18) return "Good afternoon";
   return "Good evening";
+}
+
+function formatStatus(status: string) {
+  return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+}
+
+function formatRecommendation(rec: string) {
+  return rec
+    .replace(/_/g, " ")
+    .split(" ")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
 }
 
 function formatLastActivity(date: Date) {
@@ -149,12 +168,12 @@ export default async function DashboardPage() {
                           STATUS_COLORS[signal.status] || "bg-gray-100"
                         }`}
                       >
-                        {signal.status}
+                        {formatStatus(signal.status)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {signal.responses?.[0]?.ai_recommendation
-                        ? signal.responses[0].ai_recommendation.replace("_", " ")
+                        ? formatRecommendation(signal.responses[0].ai_recommendation)
                         : "—"}
                     </td>
                     <td className="px-4 py-3">

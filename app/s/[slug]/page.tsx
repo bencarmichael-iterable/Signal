@@ -28,7 +28,7 @@ export default async function SignalPage({
       generated_page_content,
       expires_at,
       status,
-      users (full_name, company_name, photo_url)
+      users (full_name, company_name, photo_url, email)
     `)
     .eq("unique_slug", slug)
     .single();
@@ -61,24 +61,28 @@ export default async function SignalPage({
     intro_paragraph: string;
     questions: { question_text: string; options: string[] }[];
     open_field_prompt: string;
-  };
+    dynamic?: boolean;
+  } | null;
 
-  const users = signal.users as { full_name: string; company_name: string; photo_url: string | null }[] | null;
+  const users = signal.users as { full_name: string; company_name: string; photo_url: string | null; email: string }[] | null;
   const rep = Array.isArray(users) ? users[0] : users;
   const repName = rep?.full_name?.split(" ")[0] || "Your contact";
 
   return (
     <SignalForm
       signalId={signal.id}
+      slug={slug}
       prospectName={signal.prospect_first_name}
       prospectCompany={signal.prospect_company}
       prospectWebsiteUrl={signal.prospect_website_url}
       prospectLogoUrl={signal.prospect_logo_url}
-      introParagraph={content.intro_paragraph}
-      questions={content.questions}
-      openFieldPrompt={content.open_field_prompt}
+      introParagraph={content?.intro_paragraph ?? ""}
+      initialQuestions={content?.questions ?? []}
+      openFieldPrompt={content?.open_field_prompt ?? "Anything else you'd like to add?"}
       repName={repName}
       repCompany={rep?.company_name || ""}
+      repEmail={rep?.email || null}
+      dynamic={content?.dynamic ?? false}
     />
   );
 }
