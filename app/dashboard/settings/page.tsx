@@ -10,7 +10,7 @@ export default async function SettingsPage() {
   if (!user) redirect("/login");
 
   const admin = createAdminClient();
-  const { data: profile } = await admin
+  const { data: profile, error: profileError } = await admin
     .from("users")
     .select("account_id, role")
     .eq("id", user.id)
@@ -23,8 +23,13 @@ export default async function SettingsPage() {
         <p className="text-red-600 mb-4">
           Admin access required. Only account admins can modify settings.
         </p>
-        <p className="text-sm text-gray-500 font-mono">
-          Debug: logged in as {user.email} (id: {user.id.slice(0, 8)}…). Profile: {profile ? `role="${profile.role}"` : "not found"}.
+        <p className="text-sm text-gray-500 font-mono space-y-1">
+          <span className="block">Debug: logged in as {user.email}</span>
+          <span className="block">Auth user id: {user.id}</span>
+          <span className="block">Profile: {profile ? `role="${profile.role}"` : "not found"}</span>
+          {profileError && (
+            <span className="block text-red-600">Query error: {profileError.message} (code: {profileError.code})</span>
+          )}
         </p>
       </div>
     );
