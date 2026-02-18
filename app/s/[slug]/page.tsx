@@ -29,7 +29,7 @@ export default async function SignalPage({
       generated_page_content,
       expires_at,
       status,
-      users (full_name, company_name, company_logo_url, photo_url, email)
+      users (full_name, company_name, company_logo_url, photo_url, email, linkedin_url)
     `)
     .eq("unique_slug", slug)
     .single();
@@ -68,7 +68,7 @@ export default async function SignalPage({
     dynamic?: boolean;
   } | null;
 
-  const users = signal.users as { full_name: string; company_name: string; company_logo_url: string | null; photo_url: string | null; email: string }[] | null;
+  const users = signal.users as { full_name: string; company_name: string; company_logo_url: string | null; photo_url: string | null; email: string; linkedin_url: string | null }[] | null;
   const rep = Array.isArray(users) ? users[0] : users;
   const repName = rep?.full_name || "Your contact";
 
@@ -92,6 +92,7 @@ export default async function SignalPage({
       repPhotoUrl={rep?.photo_url || null}
       repCompanyLogoUrl={rep?.company_logo_url || null}
       repEmail={rep?.email || null}
+      repLinkedinUrl={rep?.linkedin_url || null}
       dynamic={content?.dynamic ?? false}
     />
   );

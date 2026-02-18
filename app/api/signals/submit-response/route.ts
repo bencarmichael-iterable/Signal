@@ -25,7 +25,7 @@ export async function POST(req: Request) {
   try {
     const { signalId, answers, answersObj } = await req.json();
 
-    if (!signalId || !answers) {
+    if (!signalId || (!answers && !answersObj?.opted_out)) {
       return NextResponse.json(
         { error: "Missing signalId or answers" },
         { status: 400 }
@@ -33,6 +33,7 @@ export async function POST(req: Request) {
     }
 
     const admin = createAdminClient();
+    const optedOut = answersObj?.opted_out === true;
 
     const { data: signal, error: signalError } = await admin
       .from("signals")
@@ -65,6 +66,23 @@ export async function POST(req: Request) {
       .single();
 
     const openedAt = openedEvent?.timestamp || new Date().toISOString();
+
+    if (optedOut) {
+      const { error: insertError } = await admin.from("responses").insert({
+        signal_id: signalId,
+        answers: [{ question: "Opted out", answer: "Not interested right now" }],
+        ai_summary: "Prospect opted out - not interested at this time.",
+        ai_recommendation: "move_on",
+        opened_at: openedAt,
+        completed_at: new Date().toISOString(),
+        device_type: "unknown",
+      });
+      if (!insertError) {
+        await admin.from("signal_events").insert({ signal_id: signalId, event_type: "page_completed" });
+        await admin.from("signals").update({ status: "completed" }).eq("id", signalId);
+      }
+      return NextResponse.json({ ok: true });
+    }
 
     const contextPrompt = `
 Deal context:

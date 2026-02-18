@@ -12,7 +12,7 @@ export default async function AccountPage() {
 
   const { data: profile } = await supabase
     .from("users")
-    .select("full_name, company_name, photo_url, company_logo_url")
+    .select("full_name, company_name, photo_url, company_logo_url, linkedin_url")
     .eq("id", user.id)
     .single();
 
@@ -29,6 +29,7 @@ export default async function AccountPage() {
         initialCompanyName={profile?.company_name ?? user.user_metadata?.company_name ?? ""}
         initialPhotoUrl={profile?.photo_url ?? ""}
         initialCompanyLogoUrl={profile?.company_logo_url ?? ""}
+        initialLinkedinUrl={profile?.linkedin_url ?? ""}
       />
     </div>
   );

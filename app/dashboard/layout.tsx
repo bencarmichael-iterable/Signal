@@ -16,11 +16,18 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
+  const admin = await import("@/lib/supabase/admin").then((m) => m.createAdminClient());
+  const { data: profile } = await admin
     .from("users")
     .select("full_name, photo_url, role")
     .eq("id", user.id)
     .single();
+
+  const { data: managedTeams } = await admin
+    .from("teams")
+    .select("id")
+    .eq("manager_id", user.id);
+  const isManager = profile?.role === "manager" || profile?.role === "admin" || (managedTeams && managedTeams.length > 0);
 
   return (
     <div className="min-h-screen bg-background">
@@ -43,6 +50,14 @@ export default async function DashboardLayout({
               >
                 Insights
               </Link>
+              {isManager && (
+                <Link
+                  href="/dashboard/manager"
+                  className="text-gray-600 hover:text-primary"
+                >
+                  Manager
+                </Link>
+              )}
               {profile?.role === "admin" && (
                 <Link
                   href="/dashboard/settings"

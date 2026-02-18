@@ -15,6 +15,8 @@ export default function InsightsClient({ teams }: Props) {
     responseCount: number;
     signalCount: number;
     recommendationDistribution: { recommendation: string; count: number }[];
+    funnel?: { created: number; sent: number; opened: number; completed: number };
+    performanceByType?: Record<string, { created: number; completed: number }>;
   } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -88,6 +90,51 @@ export default function InsightsClient({ teams }: Props) {
 
       {data && (
         <>
+          {data.funnel && (
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <h3 className="font-medium text-gray-900 mb-4">Funnel</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div>
+                  <p className="text-2xl font-semibold text-gray-900">{data.funnel.created}</p>
+                  <p className="text-sm text-gray-500">Created</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-semibold text-gray-900">{data.funnel.sent}</p>
+                  <p className="text-sm text-gray-500">Sent</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-semibold text-gray-900">{data.funnel.opened}</p>
+                  <p className="text-sm text-gray-500">Opened</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-semibold text-accent">{data.funnel.completed}</p>
+                  <p className="text-sm text-gray-500">Completed</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {data.performanceByType && Object.keys(data.performanceByType).length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <h3 className="font-medium text-gray-900 mb-4">Performance by type</h3>
+              <div className="space-y-3">
+                {Object.entries(data.performanceByType).map(([type, stats]) => (
+                  <div key={type} className="flex items-center justify-between">
+                    <span className="capitalize text-gray-700">{type.replace(/_/g, " ")}</span>
+                    <span className="text-sm text-gray-600">
+                      {stats.completed}/{stats.created} completed
+                      {stats.created > 0 && (
+                        <span className="text-accent ml-1">
+                          ({Math.round((stats.completed / stats.created) * 100)}%)
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h3 className="font-medium text-gray-900 mb-1">Completed Signals</h3>

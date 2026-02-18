@@ -69,7 +69,7 @@ export default async function DashboardPage() {
       status,
       unique_slug,
       created_at,
-      responses (ai_recommendation)
+      responses (ai_recommendation, ai_summary)
     `)
     .order("created_at", { ascending: false });
 
@@ -131,6 +131,9 @@ export default async function DashboardPage() {
                     Status
                   </th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">
+                    Summary
+                  </th>
+                  <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">
                     Recommendation
                   </th>
                   <th className="text-left px-4 py-3 text-sm font-medium text-gray-700">
@@ -160,6 +163,11 @@ export default async function DashboardPage() {
                       >
                         {formatStatus(signal.status)}
                       </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 max-w-[200px] truncate" title={signal.responses?.[0]?.ai_summary ?? undefined}>
+                      {signal.responses?.[0]?.ai_summary
+                        ? signal.responses[0].ai_summary.split(/[.!?]/)[0] + (signal.responses[0].ai_summary.includes(".") ? "." : "")
+                        : "-"}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
                       {signal.responses?.[0]?.ai_recommendation

@@ -23,6 +23,8 @@ const PROMPT_KEYS: Record<string, { key: string; label: string; placeholder: str
   prospecting: [
     { key: "system_override", label: "System prompt override", placeholder: "Optional. Override the default AI instructions for prospecting signals." },
     { key: "question_themes", label: "Question themes", placeholder: "e.g. current solution, pain points, contract expiry" },
+    { key: "default_landing_intro", label: "Shared landing intro template", placeholder: "Default intro pre-filled when creating prospecting signals. Leave blank to start empty." },
+    { key: "default_value_prop", label: "Shared value prop template", placeholder: "Default value prop pre-filled when creating prospecting signals." },
   ],
 };
 

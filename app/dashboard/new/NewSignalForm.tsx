@@ -64,9 +64,11 @@ type FormData = {
 
 type Props = {
   initialSignalType?: string;
+  defaultLandingIntro?: string;
+  defaultValueProp?: string;
 };
 
-export default function NewSignalForm({ initialSignalType }: Props) {
+export default function NewSignalForm({ initialSignalType, defaultLandingIntro = "", defaultValueProp = "" }: Props) {
   const [step, setStep] = useState<"form" | "preview" | "done">("form");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -87,8 +89,8 @@ export default function NewSignalForm({ initialSignalType }: Props) {
     last_contact_ago: "",
     what_rep_wants_to_learn: [],
     rep_hypothesis: "",
-    landing_intro: "",
-    value_prop: "",
+    landing_intro: defaultLandingIntro,
+    value_prop: defaultValueProp,
   });
   const [generated, setGenerated] = useState<{
     deal_summary?: string;

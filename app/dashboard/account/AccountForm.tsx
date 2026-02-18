@@ -10,6 +10,7 @@ type Props = {
   initialCompanyName: string;
   initialPhotoUrl: string;
   initialCompanyLogoUrl: string;
+  initialLinkedinUrl?: string;
 };
 
 export default function AccountForm({
@@ -18,11 +19,13 @@ export default function AccountForm({
   initialCompanyName,
   initialPhotoUrl,
   initialCompanyLogoUrl,
+  initialLinkedinUrl = "",
 }: Props) {
   const [fullName, setFullName] = useState(initialFullName);
   const [companyName, setCompanyName] = useState(initialCompanyName);
   const [photoUrl, setPhotoUrl] = useState(initialPhotoUrl);
   const [companyLogoUrl, setCompanyLogoUrl] = useState(initialCompanyLogoUrl);
+  const [linkedinUrl, setLinkedinUrl] = useState(initialLinkedinUrl);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const router = useRouter();
@@ -40,6 +43,7 @@ export default function AccountForm({
         company_name: companyName || null,
         photo_url: photoUrl || null,
         company_logo_url: companyLogoUrl || null,
+        linkedin_url: linkedinUrl || null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", userId);
@@ -119,6 +123,24 @@ export default function AccountForm({
           className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
           placeholder="Acme Inc"
         />
+      </div>
+
+      {/* LinkedIn */}
+      <div>
+        <label htmlFor="linkedinUrl" className="block text-sm font-medium text-gray-700 mb-1">
+          LinkedIn profile URL
+        </label>
+        <input
+          id="linkedinUrl"
+          type="url"
+          value={linkedinUrl}
+          onChange={(e) => setLinkedinUrl(e.target.value)}
+          className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
+          placeholder="https://linkedin.com/in/yourprofile"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Optional. Shown as &quot;Meet [name] on LinkedIn&quot; on your Signal pages.
+        </p>
       </div>
 
       {/* Company logo */}

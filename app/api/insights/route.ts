@@ -31,7 +31,56 @@ export async function GET(req: Request) {
       summary: null,
       recommendationDistribution: [],
       teams: [],
+      funnel: { created: 0, sent: 0, opened: 0, completed: 0 },
+      performanceByType: {},
     });
+  }
+
+  const { data: accountUsers } = await admin
+    .from("users")
+    .select("id, team_id")
+    .eq("account_id", profile.account_id);
+
+  const userIds = accountUsers?.map((u) => u.id) ?? [];
+  const targetUserIds = teamId
+    ? (accountUsers?.filter((u) => u.team_id === teamId).map((u) => u.id) ?? [])
+    : userIds;
+  const effectiveUserIds = targetUserIds.length > 0 ? targetUserIds : userIds;
+
+  if (userIds.length === 0) {
+    return NextResponse.json({
+      insights: "",
+      responseCount: 0,
+      signalCount: 0,
+      recommendationDistribution: [],
+      teams: [],
+      funnel: { created: 0, sent: 0, opened: 0, completed: 0 },
+      performanceByType: {},
+    });
+  }
+
+  // Funnel + performance by type
+  let funnelQuery = admin
+    .from("signals")
+    .select("id, status, signal_type, created_at")
+    .in("user_id", effectiveUserIds);
+  if (startDate) funnelQuery = funnelQuery.gte("created_at", startDate);
+  if (endDate) funnelQuery = funnelQuery.lte("created_at", endDate + "T23:59:59.999Z");
+  const { data: allSignals } = await funnelQuery;
+
+  const funnel = {
+    created: allSignals?.length ?? 0,
+    sent: allSignals?.filter((s) => ["sent", "opened", "completed"].includes(s.status)).length ?? 0,
+    opened: allSignals?.filter((s) => ["opened", "completed"].includes(s.status)).length ?? 0,
+    completed: allSignals?.filter((s) => s.status === "completed").length ?? 0,
+  };
+
+  const byType: Record<string, { created: number; completed: number }> = {};
+  for (const s of allSignals ?? []) {
+    const t = s.signal_type || "deal_stalled";
+    if (!byType[t]) byType[t] = { created: 0, completed: 0 };
+    byType[t].created++;
+    if (s.status === "completed") byType[t].completed++;
   }
 
   let signalsQuery = admin
@@ -47,32 +96,8 @@ export async function GET(req: Request) {
         answers
       )
     `)
-    .eq("status", "completed");
-
-  const { data: accountUsers } = await admin
-    .from("users")
-    .select("id, team_id")
-    .eq("account_id", profile.account_id);
-
-  const userIds = accountUsers?.map((u) => u.id) ?? [];
-  if (userIds.length === 0) {
-    return NextResponse.json({
-      insights: "",
-      responseCount: 0,
-      signalCount: 0,
-      recommendationDistribution: [],
-      teams: [],
-    });
-  }
-
-  if (teamId) {
-    const teamUserIds = accountUsers?.filter((u) => u.team_id === teamId).map((u) => u.id) ?? [];
-    if (teamUserIds.length > 0) {
-      signalsQuery = signalsQuery.in("user_id", teamUserIds);
-    }
-  } else {
-    signalsQuery = signalsQuery.in("user_id", userIds);
-  }
+    .in("user_id", effectiveUserIds)
+    .in("status", ["opened", "completed"]);
 
   if (startDate) {
     signalsQuery = signalsQuery.gte("created_at", startDate);
@@ -152,5 +177,7 @@ Be direct and actionable. Return plain text, no markdown.`,
     signalCount: signals?.length ?? 0,
     recommendationDistribution,
     teams: teams ?? [],
+    funnel,
+    performanceByType: byType,
   });
 }

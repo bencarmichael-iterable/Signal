@@ -29,6 +29,7 @@ type Props = {
   repPhotoUrl: string | null;
   repCompanyLogoUrl: string | null;
   repEmail: string | null;
+  repLinkedinUrl?: string | null;
   dynamic?: boolean;
 };
 
@@ -51,6 +52,7 @@ export default function SignalForm({
   repPhotoUrl,
   repCompanyLogoUrl,
   repEmail,
+  repLinkedinUrl = null,
   dynamic = false,
 }: Props) {
   const [questions, setQuestions] = useState<Question[]>(initialQuestions);
@@ -184,6 +186,28 @@ export default function SignalForm({
             {repCompany && ` from ${repCompany}`} will appreciate the honesty.
             We won&apos;t follow up unless there&apos;s a real reason to do so.
           </p>
+          {(repEmail || repLinkedinUrl) && (
+            <div className="space-y-3">
+              {repEmail && (
+                <a
+                  href={`mailto:${repEmail}`}
+                  className="block w-full py-4 px-6 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition-colors"
+                >
+                  Reply to {repName}&apos;s email
+                </a>
+              )}
+              {repLinkedinUrl && (
+                <a
+                  href={repLinkedinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full py-4 px-6 border-2 border-primary text-primary font-semibold rounded-xl hover:bg-primary/5 transition-colors"
+                >
+                  Connect on LinkedIn
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -215,6 +239,16 @@ export default function SignalForm({
             )}
             <div className="flex-1 min-w-0">
               <p className="font-medium text-gray-900">{repName}</p>
+              {repLinkedinUrl && (
+                <a
+                  href={repLinkedinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-accent hover:underline"
+                >
+                  Meet {repName.split(" ")[0]} on LinkedIn
+                </a>
+              )}
               {repCompany && (
                 <div className="mt-1">
                   {repCompanyLogoUrl ? (
@@ -296,11 +330,17 @@ export default function SignalForm({
         {/* Progress + Questions section */}
         {showQuestions && (
         <>
-        <div className="h-1 bg-gray-200 rounded-full mb-8" ref={questionsRef}>
-          <div
-            className="h-full bg-accent rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
+        <div className="mb-6" ref={questionsRef}>
+          <div className="h-2 bg-gray-200 rounded-full mb-2">
+            <div
+              className="h-full bg-accent rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-sm text-gray-500">
+            Question {step + 1} of {questions.length}
+            {questions.length <= 4 && " · ~30 seconds"}
+          </p>
         </div>
 
         {/* Intro (first step only) */}
@@ -328,7 +368,7 @@ export default function SignalForm({
                     type="button"
                     onClick={() => handleOptionSelect(option)}
                     disabled={fetchingNext}
-                    className={`w-full text-left px-5 py-4 rounded-xl border-2 transition-all min-h-[48px] font-medium disabled:opacity-60 disabled:cursor-not-allowed ${
+                    className={`w-full text-left px-5 py-4 rounded-xl border-2 transition-all min-h-[56px] sm:min-h-[52px] font-medium disabled:opacity-60 disabled:cursor-not-allowed touch-manipulation ${
                       isSelected
                         ? "border-accent bg-accent/10 text-gray-900"
                         : "border-gray-200 hover:border-accent hover:bg-accent/5 text-gray-800"
@@ -403,6 +443,36 @@ export default function SignalForm({
         )}
 
         </>
+        )}
+
+        {/* Low-friction exit */}
+        {showQuestions && !submitted && (
+          <p className="mt-8 text-center">
+            <button
+              type="button"
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  const res = await fetch("/api/signals/submit-response", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      signalId,
+                      answers: [{ question: "Opted out", answer: "Not interested right now" }],
+                      answersObj: { opted_out: true },
+                    }),
+                  });
+                  if (!res.ok) throw new Error();
+                  setSubmitted(true);
+                } catch {
+                  setLoading(false);
+                }
+              }}
+              className="text-sm text-gray-500 hover:text-gray-700 underline"
+            >
+              Not interested right now?
+            </button>
+          </p>
         )}
 
         {/* Footer */}
