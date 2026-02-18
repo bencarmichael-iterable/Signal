@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import UserMenu from "./UserMenu";
 
 export default async function DashboardLayout({
   children,
@@ -37,16 +38,10 @@ export default async function DashboardLayout({
                 Signals
               </Link>
               <Link
-                href="/dashboard/new"
+                href="/dashboard/insights"
                 className="text-gray-600 hover:text-primary"
               >
-                New Signal
-              </Link>
-              <Link
-                href="/dashboard/account"
-                className="text-gray-600 hover:text-primary"
-              >
-                Account
+                Insights
               </Link>
               {profile?.role === "admin" && (
                 <Link
@@ -56,40 +51,12 @@ export default async function DashboardLayout({
                   Settings
                 </Link>
               )}
-              <Link
-                href="/dashboard/insights"
-                className="text-gray-600 hover:text-primary"
-              >
-                Insights
-              </Link>
             </div>
-            <div className="flex items-center gap-4">
-              {profile?.photo_url ? (
-                <Link href="/dashboard/account" className="flex items-center">
-                  <img
-                    src={profile.photo_url}
-                    alt={profile.full_name || "Profile"}
-                    className="h-8 w-8 rounded-full object-cover"
-                  />
-                </Link>
-              ) : (
-                <Link
-                  href="/dashboard/account"
-                  className="h-8 w-8 rounded-full bg-accent/20 flex items-center justify-center text-accent text-sm font-medium"
-                  title="Add profile photo"
-                >
-                  {(profile?.full_name || user.email)?.[0]?.toUpperCase() ?? "?"}
-                </Link>
-              )}
-              <form action="/auth/signout" method="post">
-                <button
-                  type="submit"
-                  className="text-gray-600 hover:text-primary text-sm"
-                >
-                  Sign out
-                </button>
-              </form>
-            </div>
+            <UserMenu
+              fullName={profile?.full_name ?? null}
+              photoUrl={profile?.photo_url ?? null}
+              email={user.email ?? ""}
+            />
           </div>
         </div>
       </nav>

@@ -62,12 +62,21 @@ type FormData = {
   value_prop?: string;
 };
 
-export default function NewSignalForm() {
+type Props = {
+  initialSignalType?: string;
+};
+
+export default function NewSignalForm({ initialSignalType }: Props) {
   const [step, setStep] = useState<"form" | "preview" | "done">("form");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const resolvedType = ["prospecting", "mid_deal", "deal_stalled"].includes(
+    initialSignalType ?? ""
+  )
+    ? initialSignalType!
+    : "deal_stalled";
   const [formData, setFormData] = useState<FormData>({
-    signal_type: "deal_stalled",
+    signal_type: resolvedType,
     prospect_first_name: "",
     prospect_company: "",
     prospect_website_url: "",
@@ -162,28 +171,40 @@ export default function NewSignalForm() {
         </h1>
 
         <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Signal type
-            </label>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {SIGNAL_TYPES.map(({ value, label, description }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setFormData((p) => ({ ...p, signal_type: value }))}
-                  className={`text-left p-4 rounded-xl border-2 transition-all ${
-                    formData.signal_type === value
-                      ? "border-accent bg-accent/5"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <span className="font-medium text-gray-900">{label}</span>
-                  <p className="text-sm text-gray-500 mt-1">{description}</p>
-                </button>
-              ))}
+          {!initialSignalType && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Signal type
+              </label>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {SIGNAL_TYPES.map(({ value, label, description }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setFormData((p) => ({ ...p, signal_type: value }))}
+                    className={`text-left p-4 rounded-xl border-2 transition-all ${
+                      formData.signal_type === value
+                        ? "border-accent bg-accent/5"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="font-medium text-gray-900">{label}</span>
+                    <p className="text-sm text-gray-500 mt-1">{description}</p>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {initialSignalType && (
+            <p className="text-sm text-gray-600">
+              Creating a{" "}
+              <span className="font-medium">
+                {SIGNAL_TYPES.find((t) => t.value === formData.signal_type)?.label ?? formData.signal_type}
+              </span>{" "}
+              Signal.
+            </p>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import TeamsSection from "./TeamsSection";
+import UsersSection from "./UsersSection";
 
 const SIGNAL_TYPES = [
   { value: "deal_stalled", label: "Deal stalled" },
@@ -33,7 +34,7 @@ type Props = {
 
 export default function SettingsForm({ account, prompts, teams = [] }: Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"company" | "prompts" | "teams">("company");
+  const [activeTab, setActiveTab] = useState<"company" | "prompts" | "teams" | "users">("company");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -129,6 +130,17 @@ export default function SettingsForm({ account, prompts, teams = [] }: Props) {
         >
           Teams
         </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("users")}
+          className={`pb-3 px-1 font-medium border-b-2 -mb-px ${
+            activeTab === "users"
+              ? "border-accent text-accent"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Users
+        </button>
       </div>
 
       {activeTab === "company" && (
@@ -209,6 +221,12 @@ export default function SettingsForm({ account, prompts, teams = [] }: Props) {
             team for role-based access.
           </p>
           <TeamsSection teams={teams} onUpdate={() => router.refresh()} />
+        </div>
+      )}
+
+      {activeTab === "users" && (
+        <div className="space-y-6">
+          <UsersSection />
         </div>
       )}
 

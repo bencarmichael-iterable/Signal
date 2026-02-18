@@ -105,12 +105,26 @@ export default async function DashboardPage() {
             </p>
           )}
         </div>
-        <Link
-          href="/dashboard/new"
-          className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90"
-        >
-          New Signal
-        </Link>
+        <div className="flex gap-3">
+          <Link
+            href="/dashboard/new?type=prospecting"
+            className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90"
+          >
+            Prospecting
+          </Link>
+          <Link
+            href="/dashboard/new?type=mid_deal"
+            className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90"
+          >
+            Mid-deal
+          </Link>
+          <Link
+            href="/dashboard/new?type=deal_stalled"
+            className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90"
+          >
+            Deal stalled
+          </Link>
+        </div>
       </div>
 
       {!signals || signals.length === 0 ? (
@@ -118,12 +132,26 @@ export default async function DashboardPage() {
           <p className="text-gray-600 mb-4">
             No Signals yet. Ready to get back in touch with a prospect?
           </p>
-          <Link
-            href="/dashboard/new"
-            className="inline-block px-6 py-3 bg-accent text-white font-medium rounded-lg hover:bg-accent/90"
-          >
-            Create your first Signal
-          </Link>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <Link
+              href="/dashboard/new?type=prospecting"
+              className="inline-block px-6 py-3 bg-accent text-white font-medium rounded-lg hover:bg-accent/90"
+            >
+              Prospecting
+            </Link>
+            <Link
+              href="/dashboard/new?type=mid_deal"
+              className="inline-block px-6 py-3 bg-accent text-white font-medium rounded-lg hover:bg-accent/90"
+            >
+              Mid-deal
+            </Link>
+            <Link
+              href="/dashboard/new?type=deal_stalled"
+              className="inline-block px-6 py-3 bg-accent text-white font-medium rounded-lg hover:bg-accent/90"
+            >
+              Deal stalled
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">

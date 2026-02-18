@@ -11,6 +11,7 @@
    - `supabase/migrations/003_prospect_branding.sql` — adds prospect_website_url, prospect_logo_url for micro-page branding
    - `supabase/migrations/004_user_company_logo.sql` — adds company_logo_url to users for AE branding
    - `supabase/migrations/005_accounts_teams_signal_types.sql` — accounts, teams, signal types, roles, prompt overrides
+   - `supabase/migrations/006_invites_default_admin.sql` — invites table, default sign-up role admin, invite flow for AEs
 
 ## 2. Configure Auth (optional)
 
