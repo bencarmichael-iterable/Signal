@@ -49,19 +49,20 @@ export default async function SettingsPage() {
 
   let account = null;
   let prompts: Record<string, Record<string, string>> = {};
+  const accountId = (profile as { account_id?: string }).account_id;
 
-  if (profile.account_id) {
+  if (accountId) {
     const { data: acc } = await admin
       .from("accounts")
       .select("id, name, product_description, differentiators")
-      .eq("id", profile.account_id)
+      .eq("id", accountId)
       .single();
     account = acc;
 
     const { data: promptRows } = await admin
       .from("account_prompts")
       .select("signal_type, prompt_key, prompt_value")
-      .eq("account_id", profile.account_id);
+      .eq("account_id", accountId);
 
     for (const p of promptRows || []) {
       if (!prompts[p.signal_type]) prompts[p.signal_type] = {};
@@ -70,11 +71,11 @@ export default async function SettingsPage() {
   }
 
   let teams: { id: string; name: string }[] = [];
-  if (profile.account_id) {
+  if (accountId) {
     const { data: teamRows } = await admin
       .from("teams")
       .select("id, name")
-      .eq("account_id", profile.account_id);
+      .eq("account_id", accountId);
     teams = teamRows ?? [];
   }
 
