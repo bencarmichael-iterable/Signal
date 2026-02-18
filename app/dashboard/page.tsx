@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import CreateSignalDropdown from "./CreateSignalDropdown";
 
 const STATUS_COLORS: Record<string, string> = {
   created: "bg-gray-100 text-gray-700",
@@ -91,7 +92,7 @@ export default async function DashboardPage() {
           </h1>
           <p className="text-gray-600 mt-1">
             {!signals || signals.length === 0
-              ? "Create your first Signal to recover a stalled deal."
+              ? "Create your first Signal to engage prospects and move deals forward."
               : `You have ${signals.length} Signal${signals.length === 1 ? "" : "s"}.`}
           </p>
           {lastActivity && (
@@ -105,53 +106,14 @@ export default async function DashboardPage() {
             </p>
           )}
         </div>
-        <div className="flex gap-3">
-          <Link
-            href="/dashboard/new?type=prospecting"
-            className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90"
-          >
-            Prospecting
-          </Link>
-          <Link
-            href="/dashboard/new?type=mid_deal"
-            className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90"
-          >
-            Mid-deal
-          </Link>
-          <Link
-            href="/dashboard/new?type=deal_stalled"
-            className="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary/90"
-          >
-            Deal stalled
-          </Link>
-        </div>
+        <CreateSignalDropdown />
       </div>
 
       {!signals || signals.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-          <p className="text-gray-600 mb-4">
-            No Signals yet. Ready to get back in touch with a prospect?
+          <p className="text-gray-600">
+            No Signals yet. Use the Create Signal button above to get started.
           </p>
-          <div className="flex gap-3 justify-center flex-wrap">
-            <Link
-              href="/dashboard/new?type=prospecting"
-              className="inline-block px-6 py-3 bg-accent text-white font-medium rounded-lg hover:bg-accent/90"
-            >
-              Prospecting
-            </Link>
-            <Link
-              href="/dashboard/new?type=mid_deal"
-              className="inline-block px-6 py-3 bg-accent text-white font-medium rounded-lg hover:bg-accent/90"
-            >
-              Mid-deal
-            </Link>
-            <Link
-              href="/dashboard/new?type=deal_stalled"
-              className="inline-block px-6 py-3 bg-accent text-white font-medium rounded-lg hover:bg-accent/90"
-            >
-              Deal stalled
-            </Link>
-          </div>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
