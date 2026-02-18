@@ -17,7 +17,7 @@ export default async function DashboardLayout({
 
   const { data: profile } = await supabase
     .from("users")
-    .select("full_name, photo_url")
+    .select("full_name, photo_url, role")
     .eq("id", user.id)
     .single();
 
@@ -47,6 +47,20 @@ export default async function DashboardLayout({
                 className="text-gray-600 hover:text-primary"
               >
                 Account
+              </Link>
+              {profile?.role === "admin" && (
+                <Link
+                  href="/dashboard/settings"
+                  className="text-gray-600 hover:text-primary"
+                >
+                  Settings
+                </Link>
+              )}
+              <Link
+                href="/dashboard/insights"
+                className="text-gray-600 hover:text-primary"
+              >
+                Insights
               </Link>
             </div>
             <div className="flex items-center gap-4">

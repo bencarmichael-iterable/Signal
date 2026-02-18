@@ -40,7 +40,14 @@ const WHAT_REP_WANTS_TO_LEARN = [
   { value: "other", label: "Other (they'll explain in feedback)" },
 ];
 
+const SIGNAL_TYPES = [
+  { value: "deal_stalled", label: "Deal stalled", description: "Prospect went quiet. Get intel on re-engagement." },
+  { value: "mid_deal", label: "Mid-deal", description: "Check deal health. Competitors, win/loss, experience." },
+  { value: "prospecting", label: "Prospecting", description: "Cold outreach. Discovery questions, company intro." },
+] as const;
+
 type FormData = {
+  signal_type: string;
   prospect_first_name: string;
   prospect_company: string;
   prospect_website_url: string;
@@ -51,6 +58,8 @@ type FormData = {
   last_contact_ago: string;
   what_rep_wants_to_learn: string[];
   rep_hypothesis: string;
+  landing_intro?: string;
+  value_prop?: string;
 };
 
 export default function NewSignalForm() {
@@ -58,6 +67,7 @@ export default function NewSignalForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [formData, setFormData] = useState<FormData>({
+    signal_type: "deal_stalled",
     prospect_first_name: "",
     prospect_company: "",
     prospect_website_url: "",
@@ -68,8 +78,11 @@ export default function NewSignalForm() {
     last_contact_ago: "",
     what_rep_wants_to_learn: [],
     rep_hypothesis: "",
+    landing_intro: "",
+    value_prop: "",
   });
   const [generated, setGenerated] = useState<{
+    deal_summary?: string;
     intro_paragraph: string;
     questions: { question_text: string; options: string[] }[];
     open_field_prompt: string;
@@ -150,6 +163,29 @@ export default function NewSignalForm() {
 
         <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Signal type
+            </label>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {SIGNAL_TYPES.map(({ value, label, description }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setFormData((p) => ({ ...p, signal_type: value }))}
+                  className={`text-left p-4 rounded-xl border-2 transition-all ${
+                    formData.signal_type === value
+                      ? "border-accent bg-accent/5"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <span className="font-medium text-gray-900">{label}</span>
+                  <p className="text-sm text-gray-500 mt-1">{description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Prospect first name *
             </label>
@@ -214,45 +250,119 @@ export default function NewSignalForm() {
               Paste a direct link to their logo image. If blank, we&apos;ll use their company name.
             </p>
           </div>
+          {formData.signal_type === "prospecting" && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Landing page intro (editable by you)
+                </label>
+                <textarea
+                  rows={4}
+                  value={formData.landing_intro}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, landing_intro: e.target.value }))
+                  }
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
+                  placeholder="Introduce your company, value proposition, and customers you work with..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Value proposition
+                </label>
+                <textarea
+                  rows={2}
+                  value={formData.value_prop}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, value_prop: e.target.value }))
+                  }
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
+                  placeholder="What makes your solution unique for prospects like them?"
+                />
+              </div>
+            </>
+          )}
+
+          {(formData.signal_type === "deal_stalled" || formData.signal_type === "mid_deal") && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {formData.signal_type === "deal_stalled"
+                  ? dealSummaryLabel
+                  : "Deal context (what you've discussed, stage, competitors)"}{" "}
+                *
+              </label>
+              <textarea
+                required
+                rows={5}
+                value={formData.what_was_pitched}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, what_was_pitched: e.target.value }))
+                }
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
+                placeholder={
+                  formData.signal_type === "mid_deal"
+                    ? "Current stage, who you've spoken to, competitors in the mix..."
+                    : "Metrics identified, economic buyer, decision criteria, champion, competition..."
+                }
+              />
+            </div>
+          )}
+
+          {formData.signal_type === "deal_stalled" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Where has the opportunity stalled? *
+              </label>
+              <select
+                value={formData.deal_stage_when_stalled}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    deal_stage_when_stalled: e.target.value,
+                  }))
+                }
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
+              >
+                {DEAL_STAGES.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {formData.signal_type === "mid_deal" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Current deal stage
+              </label>
+              <select
+                value={formData.deal_stage_when_stalled}
+                onChange={(e) =>
+                  setFormData((p) => ({
+                    ...p,
+                    deal_stage_when_stalled: e.target.value,
+                  }))
+                }
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
+              >
+                {DEAL_STAGES.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {(formData.signal_type === "deal_stalled" || formData.signal_type === "mid_deal") && (
+            <>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {dealSummaryLabel} *
-            </label>
-            <textarea
-              required
-              rows={5}
-              value={formData.what_was_pitched}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, what_was_pitched: e.target.value }))
-              }
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
-              placeholder="Metrics identified, economic buyer, decision criteria, champion, competition..."
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Where has the opportunity stalled? *
-            </label>
-            <select
-              value={formData.deal_stage_when_stalled}
-              onChange={(e) =>
-                setFormData((p) => ({
-                  ...p,
-                  deal_stage_when_stalled: e.target.value,
-                }))
-              }
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
-            >
-              {DEAL_STAGES.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              How long had you been speaking before it stalled?
+              {formData.signal_type === "deal_stalled"
+                ? "How long had you been speaking before it stalled?"
+                : "How long have you been speaking?"}
             </label>
             <select
               value={formData.speaking_duration}
@@ -323,6 +433,26 @@ export default function NewSignalForm() {
               placeholder="Budget got cut, champion left, timing..."
             />
           </div>
+            </>
+          )}
+
+          {formData.signal_type === "prospecting" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Why you&apos;re reaching out (optional)
+              </label>
+              <textarea
+                rows={3}
+                value={formData.what_was_pitched}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, what_was_pitched: e.target.value }))
+                }
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
+                placeholder="Any context about the prospect or why you're targeting them..."
+              />
+            </div>
+          )}
+
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <button
             type="submit"
@@ -343,6 +473,12 @@ export default function NewSignalForm() {
           Preview your Signal
         </h1>
         <div className="max-w-2xl space-y-8">
+          {generated.deal_summary && (
+            <div className="bg-white rounded-xl border border-gray-200 p-6">
+              <h2 className="font-medium text-gray-900 mb-2">Deal summary</h2>
+              <p className="text-gray-600">{generated.deal_summary}</p>
+            </div>
+          )}
           <div className="bg-white rounded-xl border border-gray-200 p-6">
             <h2 className="font-medium text-gray-900 mb-2">Intro</h2>
             <p className="text-gray-600">{generated.intro_paragraph}</p>

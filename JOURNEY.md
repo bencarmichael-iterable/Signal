@@ -24,10 +24,17 @@
 | 1 | Foundation | Next.js, Tailwind, Supabase, DB schema, Auth | ✅ |
 | 2 | Signal Creation | Input form, OpenAI generation, preview, slug | ✅ |
 | 3 | Prospect Micro-Page | Public /s/{slug}, mobile-first, submit, thank-you | ✅ |
-| 4 | Response Handling | AI summary, notifications, event tracking | ⏳ |
-| 5 | Dashboard | List view, detail view, empty states | ⏳ |
+| 4 | Response Handling | AI summary, notifications, event tracking | ✅ |
+| 5 | Dashboard | List view, detail view, empty states | ✅ |
 | 6 | Stripe | Pricing page, Checkout, usage enforcement | ⏳ |
 | 7 | Polish + Deploy | Refine prompts, copy flow, testing, deploy | ⏳ |
+
+**Recent additions:**
+- Signal types (Deal stalled, Mid-deal, Prospecting)
+- Dynamic AI questions (real-time branching, max 6)
+- Micro-page: AE photo, company logo, deal summary
+- Settings (admin): Company profile, AI prompts, teams
+- Insights: Aggregate feedback, recommendation distribution
 
 ---
 

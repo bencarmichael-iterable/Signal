@@ -18,10 +18,13 @@ type Props = {
   prospectWebsiteUrl: string | null;
   prospectLogoUrl: string | null;
   introParagraph: string;
+  dealSummary: string;
   initialQuestions: Question[];
   openFieldPrompt: string;
   repName: string;
   repCompany: string;
+  repPhotoUrl: string | null;
+  repCompanyLogoUrl: string | null;
   repEmail: string | null;
   dynamic?: boolean;
 };
@@ -34,10 +37,13 @@ export default function SignalForm({
   prospectWebsiteUrl,
   prospectLogoUrl,
   introParagraph,
+  dealSummary,
   initialQuestions,
   openFieldPrompt,
   repName,
   repCompany,
+  repPhotoUrl,
+  repCompanyLogoUrl,
   repEmail,
   dynamic = false,
 }: Props) {
@@ -177,37 +183,85 @@ export default function SignalForm({
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-lg mx-auto px-4 py-8 sm:py-12">
-        {/* Header - prospect branding or Signal logo */}
-        <div className="mb-8 flex flex-col gap-2">
-          {prospectWebsiteUrl ? (
-            <a
-              href={prospectWebsiteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-fit"
-            >
-              {prospectLogoUrl ? (
-                <img
-                  src={prospectLogoUrl}
-                  alt={prospectCompany}
-                  className="h-8 w-auto max-w-[180px] object-contain object-left"
-                />
+        {/* Header - AE + company + prospect context */}
+        <div className="mb-8">
+          <div className="flex items-start gap-4">
+            {repPhotoUrl ? (
+              <img
+                src={repPhotoUrl}
+                alt={repName}
+                className="w-12 h-12 rounded-full object-cover shrink-0"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center shrink-0">
+                <span className="text-accent font-semibold text-lg">
+                  {repName
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase()}
+                </span>
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-gray-900">{repName}</p>
+              {(repCompanyLogoUrl || repCompany) && (
+                <div className="flex items-center gap-2 mt-1">
+                  {repCompanyLogoUrl && (
+                    <img
+                      src={repCompanyLogoUrl}
+                      alt={repCompany}
+                      className="h-5 w-auto max-w-[100px] object-contain object-left"
+                    />
+                  )}
+                  {repCompany && (
+                    <span className="text-sm text-gray-500">{repCompany}</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          {(prospectLogoUrl || prospectCompany) && (
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
+                For
+              </p>
+              {prospectWebsiteUrl ? (
+                <a
+                  href={prospectWebsiteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2"
+                >
+                  {prospectLogoUrl ? (
+                    <img
+                      src={prospectLogoUrl}
+                      alt={prospectCompany}
+                      className="h-6 w-auto max-w-[120px] object-contain"
+                    />
+                  ) : null}
+                  <span className="font-medium text-gray-900">
+                    {prospectCompany}
+                  </span>
+                </a>
               ) : (
-                <span className="text-lg font-semibold text-gray-900">
+                <span className="font-medium text-gray-900">
                   {prospectCompany}
                 </span>
               )}
-            </a>
-          ) : (
-            <Link href="/" className="block w-fit">
-              <Image src="/signal-v2-logo-teal-accent.svg" alt="Signal" width={120} height={30} className="h-6 w-auto" />
-            </Link>
+            </div>
           )}
-          <p className="text-sm text-gray-500">
-            {repName}
-            {repCompany && ` · ${repCompany}`}
-          </p>
         </div>
+
+        {/* Deal summary */}
+        {dealSummary && (
+          <div className="mb-8 p-4 rounded-xl bg-gray-50 border border-gray-100">
+            <p className="text-gray-700 text-sm leading-relaxed">
+              {dealSummary}
+            </p>
+          </div>
+        )}
 
         {/* Progress */}
         <div className="h-1 bg-gray-200 rounded-full mb-8">

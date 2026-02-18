@@ -9,6 +9,7 @@ type Props = {
   initialFullName: string;
   initialCompanyName: string;
   initialPhotoUrl: string;
+  initialCompanyLogoUrl: string;
 };
 
 export default function AccountForm({
@@ -16,10 +17,12 @@ export default function AccountForm({
   initialFullName,
   initialCompanyName,
   initialPhotoUrl,
+  initialCompanyLogoUrl,
 }: Props) {
   const [fullName, setFullName] = useState(initialFullName);
   const [companyName, setCompanyName] = useState(initialCompanyName);
   const [photoUrl, setPhotoUrl] = useState(initialPhotoUrl);
+  const [companyLogoUrl, setCompanyLogoUrl] = useState(initialCompanyLogoUrl);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const router = useRouter();
@@ -36,6 +39,7 @@ export default function AccountForm({
         full_name: fullName || null,
         company_name: companyName || null,
         photo_url: photoUrl || null,
+        company_logo_url: companyLogoUrl || null,
         updated_at: new Date().toISOString(),
       })
       .eq("id", userId);
@@ -115,6 +119,24 @@ export default function AccountForm({
           className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
           placeholder="Acme Inc"
         />
+      </div>
+
+      {/* Company logo */}
+      <div>
+        <label htmlFor="companyLogoUrl" className="block text-sm font-medium text-gray-700 mb-1">
+          Company logo URL
+        </label>
+        <input
+          id="companyLogoUrl"
+          type="url"
+          value={companyLogoUrl}
+          onChange={(e) => setCompanyLogoUrl(e.target.value)}
+          className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
+          placeholder="https://..."
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Optional. Shown on your Signal micro-pages. Leave blank to hide.
+        </p>
       </div>
 
       {message && (

@@ -9,6 +9,8 @@
    - `supabase/migrations/001_initial_schema.sql` — creates tables, RLS, auth trigger
    - `supabase/migrations/002_signal_form_fields.sql` — adds speaking_duration, last_contact_ago, what_rep_wants_to_learn to signals
    - `supabase/migrations/003_prospect_branding.sql` — adds prospect_website_url, prospect_logo_url for micro-page branding
+   - `supabase/migrations/004_user_company_logo.sql` — adds company_logo_url to users for AE branding
+   - `supabase/migrations/005_accounts_teams_signal_types.sql` — accounts, teams, signal types, roles, prompt overrides
 
 ## 2. Configure Auth (optional)
 

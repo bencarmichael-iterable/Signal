@@ -6,37 +6,46 @@ import { nanoid } from "nanoid";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const SYSTEM_PROMPT = `You are Signal, an AI that helps sales professionals understand why their prospects went quiet. Your job is to generate the FIRST question for a personalised micro-page. More questions will be asked dynamically based on the prospect's answers.
+const PROMPTS: Record<string, string> = {
+  deal_stalled: `You are Signal, an AI that helps sales professionals understand why their prospects went quiet. Your job is to generate the FIRST question for a personalised micro-page. More questions will be asked dynamically based on the prospect's answers.
 
-The tone must be:
-- Warm, human, and disarming
-- Zero sales pressure
-- Genuinely curious, not manipulative
-- Brief - respect the prospect's time
+The tone must be: Warm, human, disarming, zero sales pressure, genuinely curious. Brief - respect the prospect's time.
 
-You will receive deal context from the sales rep. Generate a HIGHLY PERSONALISED first question that:
-- References specific details from the deal summary (company, solution, stage)
-- Feels like it was written for this exact prospect
-- Uses tap-to-select options (no open text for this question)
-- One option should allow the prospect to indicate they're still interested
+Generate from deal context:
+1. deal_summary: 2-3 sentences summarising what has happened in this deal so far. Include: what was discussed/pitched, where things reached, and where they stalled. Write for the prospect so they recognise the context.
+2. intro_paragraph: 2-3 sentences using the prospect's first name, acknowledging the conversation went quiet, and setting expectations ("takes 45 seconds, no pitch, just curious").
+3. first_question: { question_text, options (4-5), multi_select?: true }
+4. open_field_prompt: Short, warm prompt for optional open text.
+5. suggested_email: 4-6 lines, first person, include [SIGNAL_LINK]. Never use "survey". Explain value for prospect.
+
+Return ONLY valid JSON: deal_summary, intro_paragraph, first_question, open_field_prompt, suggested_email.`,
+
+  mid_deal: `You are Signal, an AI helping sales reps check deal health mid-opportunity. Generate the FIRST question for a personalised micro-page. Questions will branch dynamically.
+
+Focus on: competitors in the mix, where they're winning/losing, experience so far, features/pricing/support comparison. Tone: warm, curious, no pressure.
 
 Generate:
+1. deal_summary: 2-3 sentences on the deal context - what's been discussed, current stage, who's involved.
+2. intro_paragraph: 2-3 sentences, prospect's first name, frame as a quick pulse check ("45 seconds").
+3. first_question: { question_text, options (4-5), multi_select?: true } - discovery-style, competitor/experience focused.
+4. open_field_prompt: Short prompt for optional comment.
+5. suggested_email: 4-6 lines, [SIGNAL_LINK], no "survey" framing.
 
-1. intro_paragraph: 2-3 sentences using the prospect's first name, acknowledging the conversation went quiet, and setting expectations ("takes 45 seconds, no pitch, just curious"). Reference the specific deal context naturally.
+Return ONLY valid JSON: deal_summary, intro_paragraph, first_question, open_field_prompt, suggested_email.`,
 
-2. first_question: A single question object with:
-   - question_text: The question (reference deal specifics - make it feel personal)
-   - options: 4-5 tap-to-select answer options (keep them short - 3-8 words each)
-   - multi_select: (optional) true when "which of these apply?" style - allows multiple selections
+  prospecting: `You are Signal, an AI helping with cold prospecting. Generate the FIRST question for a personalised landing page. Discovery-style questions.
 
-3. open_field_prompt: A short, warm prompt for the optional open text field at the end.
+Focus on: current solution, pain points, contract expiry, budget timing. Tone: warm, helpful, introduce value prop. No "survey" language.
 
-4. suggested_email: A 4-6 line email the rep can copy-paste. Written in first person. Include placeholder: [SIGNAL_LINK]
-   - NEVER use "survey", "feedback form", or "questionnaire" - frame it as a quick, personal check-in or a way to share where things stand
-   - Explain the value for the prospect: e.g. so the rep can tailor follow-up (or step back), avoid irrelevant outreach, respect their timeline, save them from back-and-forth
-   - Keep it warm and human. The link should feel like a low-friction way for them to respond on their own terms
+Generate:
+1. deal_summary: 2-3 sentences introducing the company and why they're reaching out. Use landing_intro and value_prop context.
+2. intro_paragraph: 2-3 sentences, prospect's first name, introduce the rep/company, set expectations.
+3. first_question: { question_text, options (4-5), multi_select?: true } - discovery (e.g. "What solution are you using today?", "Any pain points?").
+4. open_field_prompt: Short prompt for optional comment.
+5. suggested_email: 4-6 lines, [SIGNAL_LINK], no "survey".
 
-Return ONLY valid JSON with these four keys. No markdown, no preamble.`;
+Return ONLY valid JSON: deal_summary, intro_paragraph, first_question, open_field_prompt, suggested_email.`,
+};
 
 export async function POST(req: Request) {
   try {
@@ -49,6 +58,7 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const {
+      signal_type = "deal_stalled",
       prospect_first_name,
       prospect_company,
       prospect_website_url,
@@ -59,11 +69,26 @@ export async function POST(req: Request) {
       last_contact_ago,
       what_rep_wants_to_learn,
       rep_hypothesis,
+      landing_intro,
+      value_prop,
     } = body;
 
-    if (!prospect_first_name || !prospect_company || !what_was_pitched || !prospect_website_url) {
+    const st = ["deal_stalled", "mid_deal", "prospecting"].includes(signal_type)
+      ? signal_type
+      : "deal_stalled";
+
+    if (!prospect_first_name || !prospect_company || !prospect_website_url) {
       return NextResponse.json(
         { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+    if (
+      (st === "deal_stalled" || st === "mid_deal") &&
+      !what_was_pitched?.trim()
+    ) {
+      return NextResponse.json(
+        { error: "Deal context is required" },
         { status: 400 }
       );
     }
@@ -99,23 +124,79 @@ export async function POST(req: Request) {
       not_sure: "Not sure",
     };
 
+    const admin = createAdminClient();
+    const { data: userProfile } = await admin
+      .from("users")
+      .select("id, account_id")
+      .eq("id", user.id)
+      .single();
+
+    if (!userProfile) {
+      await admin.from("users").insert({
+        id: user.id,
+        email: user.email!,
+        full_name: user.user_metadata?.full_name || user.user_metadata?.name,
+        company_name: user.user_metadata?.company_name,
+      });
+    }
+
+    let accountContext = "";
+    let systemPrompt = PROMPTS[st] || PROMPTS.deal_stalled;
+
+    if (userProfile?.account_id) {
+      const { data: account } = await admin
+        .from("accounts")
+        .select("product_description, differentiators")
+        .eq("id", userProfile.account_id)
+        .single();
+      if (account) {
+        accountContext = [
+          account.product_description && `Product: ${account.product_description}`,
+          account.differentiators && `Differentiators: ${account.differentiators}`,
+        ]
+          .filter(Boolean)
+          .join("\n");
+      }
+
+      const { data: promptRows } = await admin
+        .from("account_prompts")
+        .select("prompt_key, prompt_value")
+        .eq("account_id", userProfile.account_id)
+        .eq("signal_type", st);
+      const override = promptRows?.find((p) => p.prompt_key === "system_override" && p.prompt_value?.trim());
+      if (override?.prompt_value) {
+        systemPrompt = override.prompt_value;
+      }
+      const themes = promptRows?.find((p) => p.prompt_key === "question_themes" && p.prompt_value?.trim());
+      if (themes?.prompt_value) {
+        systemPrompt += `\n\nQuestion themes to consider: ${themes.prompt_value}`;
+      }
+    }
+
     const userPrompt = `
 Prospect first name: ${prospect_first_name}
 Prospect company: ${prospect_company}
 Prospect website: ${prospect_website_url}
 ${prospect_logo_url ? `Prospect logo URL: ${prospect_logo_url}` : ""}
-Deal summary (MEDDPICC, findings, why solution is best fit): ${what_was_pitched}
-Deal stalled at: ${deal_stage_when_stalled}
-${speaking_duration ? `How long they had been speaking: ${SPEAKING_LABELS[speaking_duration] || speaking_duration}` : ""}
-${last_contact_ago ? `How long ago last contact: ${LAST_CONTACT_LABELS[last_contact_ago] || last_contact_ago}` : ""}
+${accountContext ? `\nAccount context:\n${accountContext}` : ""}
+${st === "prospecting" ? `
+Landing intro (company, value prop, customers): ${landing_intro || ""}
+Value proposition: ${value_prop || ""}
+Why reaching out: ${what_was_pitched || ""}
+` : `
+Deal context: ${what_was_pitched}
+Deal stage: ${deal_stage_when_stalled || "went_dark"}
+${speaking_duration ? `How long speaking: ${SPEAKING_LABELS[speaking_duration] || speaking_duration}` : ""}
+${last_contact_ago ? `Last contact: ${LAST_CONTACT_LABELS[last_contact_ago] || last_contact_ago}` : ""}
 ${wantsToLearnLabels ? `What rep wants to understand: ${wantsToLearnLabels}` : ""}
 ${rep_hypothesis ? `Rep's hypothesis: ${rep_hypothesis}` : ""}
+`}
 `;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
       temperature: 0.75,
@@ -128,6 +209,7 @@ ${rep_hypothesis ? `Rep's hypothesis: ${rep_hypothesis}` : ""}
     }
 
     const parsed = JSON.parse(contentStr) as {
+      deal_summary: string;
       intro_paragraph: string;
       first_question: { question_text: string; options: string[] };
       open_field_prompt: string;
@@ -143,30 +225,14 @@ ${rep_hypothesis ? `Rep's hypothesis: ${rep_hypothesis}` : ""}
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
 
-    const admin = createAdminClient();
-
-    const { data: userProfile } = await admin
-      .from("users")
-      .select("id")
-      .eq("id", user.id)
-      .single();
-
-    if (!userProfile) {
-      await admin.from("users").insert({
-        id: user.id,
-        email: user.email!,
-        full_name: user.user_metadata?.full_name || user.user_metadata?.name,
-        company_name: user.user_metadata?.company_name,
-      });
-    }
-
     const { data: signal, error } = await admin.from("signals").insert({
       user_id: user.id,
+      signal_type: st,
       prospect_first_name,
       prospect_company,
       prospect_website_url,
       prospect_logo_url: prospect_logo_url || null,
-      what_was_pitched,
+      what_was_pitched: what_was_pitched || landing_intro || value_prop || "",
       deal_stage_when_stalled: deal_stage_when_stalled || "went_dark",
       speaking_duration: speaking_duration || null,
       last_contact_ago: last_contact_ago || null,

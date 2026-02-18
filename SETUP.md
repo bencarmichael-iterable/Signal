@@ -54,9 +54,9 @@ git push -u origin main
 2. Click **Add new site** → **Import an existing project**
 3. Choose **GitHub** and authorize Netlify if prompted
 4. Select your **Signal** repository
-5. **Build settings** (for static HTML for now):
-   - **Build command:** leave empty (or `echo "No build"`)
-   - **Publish directory:** `.` (root) or `dist` if you add a build step later
+5. **Build settings** (Next.js - Netlify plugin auto-detects):
+   - **Build command:** `npm run build` (or leave default)
+   - **Environment variables:** Add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`, `NEXT_PUBLIC_APP_URL`
 6. Click **Deploy site**
 
 Netlify will give you a URL like `https://random-name-12345.netlify.app`. You can change it in **Site settings** → **Domain management** → **Edit site name** to something like `signal-yourname.netlify.app`.
