@@ -10,11 +10,23 @@ export default async function SettingsPage() {
   if (!user) redirect("/login");
 
   const admin = createAdminClient();
-  const { data: profile, error: profileError } = await admin
+  let { data: profile, error: profileError } = await admin
     .from("users")
-    .select("account_id, role")
+    .select("id, account_id, role")
     .eq("id", user.id)
     .single();
+
+  // Fallback: lookup by email if id lookup fails (handles id mismatch from trigger/insert issues)
+  if (!profile && user.email) {
+    const byEmail = await admin
+      .from("users")
+      .select("id, account_id, role")
+      .eq("email", user.email)
+      .single();
+    if (byEmail.data) {
+      profile = byEmail.data;
+    }
+  }
 
   if (!profile || profile.role !== "admin") {
     return (
