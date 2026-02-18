@@ -12,7 +12,7 @@ export default async function SettingsPage() {
   const admin = createAdminClient();
   let { data: profile, error: profileError } = await admin
     .from("users")
-    .select("id, email, role")
+    .select("id, email, role, account_id")
     .eq("id", user.id)
     .single();
 
@@ -20,7 +20,7 @@ export default async function SettingsPage() {
   if (!profile && user.email) {
     const byEmail = await admin
       .from("users")
-      .select("id, email, role")
+      .select("id, email, role, account_id")
       .eq("email", user.email)
       .single();
     if (byEmail.data) {
@@ -49,7 +49,7 @@ export default async function SettingsPage() {
 
   let account = null;
   let prompts: Record<string, Record<string, string>> = {};
-  const accountId = (profile as { account_id?: string }).account_id;
+  const accountId = profile.account_id;
 
   if (accountId) {
     const { data: acc } = await admin
