@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -17,8 +17,11 @@ type Props = {
   prospectCompany: string;
   prospectWebsiteUrl: string | null;
   prospectLogoUrl: string | null;
+  signalType?: string;
   introParagraph: string;
   dealSummary: string;
+  landingH1?: string | null;
+  valuePropBullets?: string[] | null;
   initialQuestions: Question[];
   openFieldPrompt: string;
   repName: string;
@@ -36,8 +39,11 @@ export default function SignalForm({
   prospectCompany,
   prospectWebsiteUrl,
   prospectLogoUrl,
+  signalType = "deal_stalled",
   introParagraph,
   dealSummary,
+  landingH1 = null,
+  valuePropBullets = null,
   initialQuestions,
   openFieldPrompt,
   repName,
@@ -57,8 +63,12 @@ export default function SignalForm({
   const [fetchingNext, setFetchingNext] = useState(false);
   const [showOpenField, setShowOpenField] = useState(false);
   const [finalOpenFieldPrompt, setFinalOpenFieldPrompt] = useState<string | null>(null);
+  const hasProspectingLanding = signalType === "prospecting" && (landingH1 || (valuePropBullets && valuePropBullets.length > 0) || dealSummary);
+  const [showQuestions, setShowQuestions] = useState(!hasProspectingLanding);
+  const questionsRef = useRef<HTMLDivElement>(null);
 
   const currentQuestion = questions[step];
+  const isProspecting = signalType === "prospecting";
   const isLastQuestion = step === questions.length - 1;
   const progress = ((step + 1) / Math.max(questions.length, 6)) * 100;
 
@@ -182,8 +192,8 @@ export default function SignalForm({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-lg mx-auto px-4 py-8 sm:py-12">
-        {/* Header - AE + company + prospect context */}
+      <div className={`mx-auto px-4 py-8 sm:py-12 ${isProspecting ? "max-w-2xl" : "max-w-lg"}`}>
+        {/* Header - AE + prospect (logo OR name, not both) */}
         <div className="mb-8">
           <div className="flex items-start gap-4">
             {repPhotoUrl ? (
@@ -206,16 +216,15 @@ export default function SignalForm({
             )}
             <div className="flex-1 min-w-0">
               <p className="font-medium text-gray-900">{repName}</p>
-              {(repCompanyLogoUrl || repCompany) && (
-                <div className="flex items-center gap-2 mt-1">
-                  {repCompanyLogoUrl && (
+              {repCompany && (
+                <div className="mt-1">
+                  {repCompanyLogoUrl ? (
                     <img
                       src={repCompanyLogoUrl}
                       alt={repCompany}
                       className="h-5 w-auto max-w-[100px] object-contain object-left"
                     />
-                  )}
-                  {repCompany && (
+                  ) : (
                     <span className="text-sm text-gray-500">{repCompany}</span>
                   )}
                 </div>
@@ -232,7 +241,7 @@ export default function SignalForm({
                   href={prospectWebsiteUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2"
+                  className="inline-flex items-center"
                 >
                   {prospectLogoUrl ? (
                     <img
@@ -240,22 +249,53 @@ export default function SignalForm({
                       alt={prospectCompany}
                       className="h-6 w-auto max-w-[120px] object-contain"
                     />
-                  ) : null}
-                  <span className="font-medium text-gray-900">
-                    {prospectCompany}
-                  </span>
+                  ) : (
+                    <span className="font-medium text-gray-900">{prospectCompany}</span>
+                  )}
                 </a>
               ) : (
-                <span className="font-medium text-gray-900">
-                  {prospectCompany}
-                </span>
+                <span className="font-medium text-gray-900">{prospectCompany}</span>
               )}
             </div>
           )}
         </div>
 
-        {/* Deal summary */}
-        {dealSummary && (
+        {/* Prospecting: H1 + bullets + CTA */}
+        {isProspecting && (landingH1 || valuePropBullets?.length || dealSummary) && !showQuestions && (
+          <div className="mb-10">
+            {landingH1 && (
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 leading-tight">
+                {landingH1}
+              </h1>
+            )}
+            {dealSummary && (
+              <p className="text-gray-700 mb-6 leading-relaxed">{dealSummary}</p>
+            )}
+            {valuePropBullets && valuePropBullets.length > 0 && (
+              <ul className="space-y-3 mb-8">
+                {valuePropBullets.map((bullet, i) => (
+                  <li key={i} className="flex gap-3">
+                    <span className="text-accent shrink-0 mt-0.5">•</span>
+                    <span className="text-gray-700">{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                setShowQuestions(true);
+                setTimeout(() => questionsRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+              }}
+              className="w-full py-4 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition-colors"
+            >
+              Answer a few quick questions
+            </button>
+          </div>
+        )}
+
+        {/* Deal summary (non-prospecting) */}
+        {!isProspecting && dealSummary && (
           <div className="mb-8 p-4 rounded-xl bg-gray-50 border border-gray-100">
             <p className="text-gray-700 text-sm leading-relaxed">
               {dealSummary}
@@ -263,16 +303,18 @@ export default function SignalForm({
           </div>
         )}
 
-        {/* Progress */}
-        <div className="h-1 bg-gray-200 rounded-full mb-8">
+        {/* Progress + Questions section */}
+        {(showQuestions || !isProspecting) && (
+        <>
+        <div className="h-1 bg-gray-200 rounded-full mb-8" ref={questionsRef}>
           <div
             className="h-full bg-accent rounded-full transition-all duration-300"
             style={{ width: `${progress}%` }}
           />
         </div>
 
-        {/* Intro (first step only) */}
-        {step === 0 && (
+        {/* Intro (first step only, non-prospecting or after CTA) */}
+        {step === 0 && (showQuestions || !isProspecting) && (
           <p className="text-gray-700 text-lg mb-8 leading-relaxed">
             {introParagraph}
           </p>
@@ -368,6 +410,9 @@ export default function SignalForm({
           >
             ← Previous
           </button>
+        )}
+
+        </>
         )}
 
         {/* Footer */}

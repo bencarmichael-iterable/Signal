@@ -38,13 +38,15 @@ Return ONLY valid JSON: deal_summary, intro_paragraph, first_question, open_fiel
 Focus on: current solution, pain points, contract expiry, budget timing. Tone: warm, helpful, introduce value prop. No "survey" language.
 
 Generate:
-1. deal_summary: 2-3 sentences introducing the company and why they're reaching out. Use landing_intro and value_prop context.
-2. intro_paragraph: 2-3 sentences, prospect's first name, introduce the rep/company, set expectations.
-3. first_question: { question_text, options (4-5), multi_select?: true } - discovery (e.g. "What solution are you using today?", "Any pain points?").
-4. open_field_prompt: Short prompt for optional comment.
-5. suggested_email: 4-6 lines, [SIGNAL_LINK], no "survey".
+1. landing_h1: A compelling headline question for the prospect (e.g. "In the market for Marketing Automation?" or "Exploring customer engagement platforms?"). Should feel relevant to their industry/situation. One short question, no period.
+2. deal_summary: 2-3 sentences introducing the company and why they're reaching out. Use landing_intro and value_prop context.
+3. value_prop_bullets: Array of 3-5 bullet points. Combine value proposition + key customers/social proof. Each bullet one short line. Example: ["Cross-channel engagement at scale", "Trusted by Netflix, Spotify, and 1000+ brands", "Personalization that drives revenue"].
+4. intro_paragraph: 2-3 sentences, prospect's first name, introduce the rep/company, set expectations ("takes 45 seconds").
+5. first_question: { question_text, options (4-5), multi_select?: true } - discovery (e.g. "What solution are you using today?", "Any pain points?").
+6. open_field_prompt: Short prompt for optional comment.
+7. suggested_email: 4-6 lines, [SIGNAL_LINK], no "survey".
 
-Return ONLY valid JSON: deal_summary, intro_paragraph, first_question, open_field_prompt, suggested_email.`,
+Return ONLY valid JSON: landing_h1, deal_summary, value_prop_bullets, intro_paragraph, first_question, open_field_prompt, suggested_email.`,
 };
 
 export async function POST(req: Request) {
@@ -217,7 +219,9 @@ ${rep_hypothesis ? `Rep's hypothesis: ${rep_hypothesis}` : ""}
     }
 
     const parsed = JSON.parse(contentStr) as {
-      deal_summary: string;
+      deal_summary?: string;
+      landing_h1?: string;
+      value_prop_bullets?: string[];
       intro_paragraph: string;
       first_question: { question_text: string; options: string[] };
       open_field_prompt: string;

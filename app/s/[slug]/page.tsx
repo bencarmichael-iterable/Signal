@@ -25,6 +25,7 @@ export default async function SignalPage({
       prospect_company,
       prospect_website_url,
       prospect_logo_url,
+      signal_type,
       generated_page_content,
       expires_at,
       status,
@@ -59,6 +60,8 @@ export default async function SignalPage({
 
   const content = signal.generated_page_content as {
     deal_summary?: string;
+    landing_h1?: string;
+    value_prop_bullets?: string[];
     intro_paragraph: string;
     questions: { question_text: string; options: string[] }[];
     open_field_prompt: string;
@@ -77,8 +80,11 @@ export default async function SignalPage({
       prospectCompany={signal.prospect_company}
       prospectWebsiteUrl={signal.prospect_website_url}
       prospectLogoUrl={signal.prospect_logo_url}
+      signalType={signal.signal_type ?? "deal_stalled"}
       introParagraph={content?.intro_paragraph ?? ""}
       dealSummary={content?.deal_summary ?? ""}
+      landingH1={content?.landing_h1 ?? null}
+      valuePropBullets={content?.value_prop_bullets ?? null}
       initialQuestions={content?.questions ?? []}
       openFieldPrompt={content?.open_field_prompt ?? "Anything else you'd like to add?"}
       repName={rep?.full_name || repName}

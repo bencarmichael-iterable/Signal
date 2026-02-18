@@ -100,6 +100,7 @@ export default function NewSignalForm({ initialSignalType }: Props) {
   const [signalId, setSignalId] = useState<string | null>(null);
   const [link, setLink] = useState("");
   const [copied, setCopied] = useState(false);
+  const [generatingLanding, setGeneratingLanding] = useState<"intro" | "value_prop" | null>(null);
 
   const dealSummaryLabel = `Summarise the deal so far, including MEDDPICC, or any other findings you have. Outline why you feel your solution is the best fit for ${formData.prospect_company || "the prospect"}`;
 
@@ -274,9 +275,42 @@ export default function NewSignalForm({ initialSignalType }: Props) {
           {formData.signal_type === "prospecting" && (
             <>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Landing page intro (editable by you)
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Landing page intro (editable by you)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setGeneratingLanding("intro");
+                      try {
+                        const res = await fetch("/api/signals/generate-landing", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            prospect_company: formData.prospect_company,
+                            prospect_first_name: formData.prospect_first_name,
+                            field: "landing_intro",
+                          }),
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.landing_intro) {
+                          setFormData((p) => ({ ...p, landing_intro: data.landing_intro }));
+                        } else {
+                          setError(data.error || "Failed to generate");
+                        }
+                      } catch {
+                        setError("Failed to generate");
+                      } finally {
+                        setGeneratingLanding(null);
+                      }
+                    }}
+                    disabled={generatingLanding !== null}
+                    className="text-sm text-accent hover:text-accent/80 font-medium disabled:opacity-50"
+                  >
+                    {generatingLanding === "intro" ? "Generating…" : "Generate using AI"}
+                  </button>
+                </div>
                 <textarea
                   rows={4}
                   value={formData.landing_intro}
@@ -288,9 +322,42 @@ export default function NewSignalForm({ initialSignalType }: Props) {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Value proposition
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Value proposition
+                  </label>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setGeneratingLanding("value_prop");
+                      try {
+                        const res = await fetch("/api/signals/generate-landing", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            prospect_company: formData.prospect_company,
+                            prospect_first_name: formData.prospect_first_name,
+                            field: "value_prop",
+                          }),
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.value_prop) {
+                          setFormData((p) => ({ ...p, value_prop: data.value_prop }));
+                        } else {
+                          setError(data.error || "Failed to generate");
+                        }
+                      } catch {
+                        setError("Failed to generate");
+                      } finally {
+                        setGeneratingLanding(null);
+                      }
+                    }}
+                    disabled={generatingLanding !== null}
+                    className="text-sm text-accent hover:text-accent/80 font-medium disabled:opacity-50"
+                  >
+                    {generatingLanding === "value_prop" ? "Generating…" : "Generate using AI"}
+                  </button>
+                </div>
                 <textarea
                   rows={2}
                   value={formData.value_prop}
