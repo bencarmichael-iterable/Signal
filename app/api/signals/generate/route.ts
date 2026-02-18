@@ -132,11 +132,19 @@ export async function POST(req: Request) {
       .single();
 
     if (!userProfile) {
+      const { data: defaultAccount } = await admin
+        .from("accounts")
+        .select("id")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .single();
       await admin.from("users").insert({
         id: user.id,
         email: user.email!,
         full_name: user.user_metadata?.full_name || user.user_metadata?.name,
         company_name: user.user_metadata?.company_name,
+        account_id: defaultAccount?.id ?? null,
+        role: "admin",
       });
     }
 

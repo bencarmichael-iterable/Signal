@@ -20,8 +20,11 @@ export default async function SettingsPage() {
     return (
       <div>
         <h1 className="text-2xl font-semibold text-gray-900 mb-2">Settings</h1>
-        <p className="text-red-600">
+        <p className="text-red-600 mb-4">
           Admin access required. Only account admins can modify settings.
+        </p>
+        <p className="text-sm text-gray-500 font-mono">
+          Debug: logged in as {user.email} (id: {user.id.slice(0, 8)}…). Profile: {profile ? `role="${profile.role}"` : "not found"}.
         </p>
       </div>
     );

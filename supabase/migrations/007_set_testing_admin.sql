@@ -8,11 +8,11 @@ BEGIN
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'role'
   ) THEN
-    ALTER TABLE public.users ADD COLUMN role user_role DEFAULT 'ae';
+    ALTER TABLE users ADD COLUMN role user_role DEFAULT 'ae';
   END IF;
 END $$;
 
 -- Set testing1234@gmail.com as admin
-UPDATE public.users
+UPDATE users
 SET role = 'admin', updated_at = NOW()
 WHERE email = 'testing1234@gmail.com';
