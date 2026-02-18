@@ -12,7 +12,7 @@ export default async function SettingsPage() {
   const admin = createAdminClient();
   let { data: profile, error: profileError } = await admin
     .from("users")
-    .select("id, account_id, role")
+    .select("id, email, role")
     .eq("id", user.id)
     .single();
 
@@ -20,7 +20,7 @@ export default async function SettingsPage() {
   if (!profile && user.email) {
     const byEmail = await admin
       .from("users")
-      .select("id, account_id, role")
+      .select("id, email, role")
       .eq("email", user.email)
       .single();
     if (byEmail.data) {
