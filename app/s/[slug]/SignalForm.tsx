@@ -63,12 +63,11 @@ export default function SignalForm({
   const [fetchingNext, setFetchingNext] = useState(false);
   const [showOpenField, setShowOpenField] = useState(false);
   const [finalOpenFieldPrompt, setFinalOpenFieldPrompt] = useState<string | null>(null);
-  const hasProspectingLanding = signalType === "prospecting" && (landingH1 || (valuePropBullets && valuePropBullets.length > 0) || dealSummary);
-  const [showQuestions, setShowQuestions] = useState(!hasProspectingLanding);
+  const hasLandingContent = landingH1 || (valuePropBullets && valuePropBullets.length > 0) || dealSummary;
+  const [showQuestions, setShowQuestions] = useState(!hasLandingContent);
   const questionsRef = useRef<HTMLDivElement>(null);
 
   const currentQuestion = questions[step];
-  const isProspecting = signalType === "prospecting";
   const isLastQuestion = step === questions.length - 1;
   const progress = ((step + 1) / Math.max(questions.length, 6)) * 100;
 
@@ -192,7 +191,7 @@ export default function SignalForm({
 
   return (
     <div className="min-h-screen bg-background">
-      <div className={`mx-auto px-4 py-8 sm:py-12 ${isProspecting ? "max-w-2xl" : "max-w-lg"}`}>
+      <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12">
         {/* Header - AE + prospect (logo OR name, not both) */}
         <div className="mb-8">
           <div className="flex items-start gap-4">
@@ -260,8 +259,8 @@ export default function SignalForm({
           )}
         </div>
 
-        {/* Prospecting: H1 + bullets + CTA */}
-        {isProspecting && (landingH1 || valuePropBullets?.length || dealSummary) && !showQuestions && (
+        {/* Landing: H1 + bullets + CTA (all signal types) */}
+        {(landingH1 || valuePropBullets?.length || dealSummary) && !showQuestions && (
           <div className="mb-10">
             {landingH1 && (
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 leading-tight">
@@ -294,17 +293,8 @@ export default function SignalForm({
           </div>
         )}
 
-        {/* Deal summary (non-prospecting) */}
-        {!isProspecting && dealSummary && (
-          <div className="mb-8 p-4 rounded-xl bg-gray-50 border border-gray-100">
-            <p className="text-gray-700 text-sm leading-relaxed">
-              {dealSummary}
-            </p>
-          </div>
-        )}
-
         {/* Progress + Questions section */}
-        {(showQuestions || !isProspecting) && (
+        {showQuestions && (
         <>
         <div className="h-1 bg-gray-200 rounded-full mb-8" ref={questionsRef}>
           <div
@@ -313,8 +303,8 @@ export default function SignalForm({
           />
         </div>
 
-        {/* Intro (first step only, non-prospecting or after CTA) */}
-        {step === 0 && (showQuestions || !isProspecting) && (
+        {/* Intro (first step only) */}
+        {step === 0 && (
           <p className="text-gray-700 text-lg mb-8 leading-relaxed">
             {introParagraph}
           </p>
