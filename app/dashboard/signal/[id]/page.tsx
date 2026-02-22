@@ -50,13 +50,17 @@ export default async function SignalDetailPage({
     notFound();
   }
 
-  let responseLimitExceeded = false;
+  const response = Array.isArray(signal.responses)
+    ? signal.responses[0]
+    : signal.responses;
+
+  let canViewResponse = true;
   const { data: profile } = await supabase
     .from("users")
     .select("account_id")
     .eq("id", user.id)
     .single();
-  if (profile?.account_id) {
+  if (profile?.account_id && response) {
     const admin = createAdminClient();
     const { data: account } = await admin
       .from("accounts")
@@ -72,19 +76,26 @@ export default async function SignalDetailPage({
         .eq("account_id", profile.account_id);
       const userIds = accountUsers?.map((u) => u.id) ?? [];
       if (userIds.length > 0) {
-        const { count } = await admin
+        const { data: accountSignals } = await admin
           .from("signals")
-          .select("id", { count: "exact", head: true })
-          .in("user_id", userIds)
-          .gte("created_at", startOfMonth.toISOString());
-        responseLimitExceeded = (count ?? 0) >= 3;
+          .select("id")
+          .in("user_id", userIds);
+        const accountSignalIds = new Set(accountSignals?.map((s) => s.id) ?? []);
+        const { data: responses } = await admin
+          .from("responses")
+          .select("signal_id, completed_at")
+          .not("completed_at", "is", null)
+          .gte("completed_at", startOfMonth.toISOString());
+        const accountResponses = (responses ?? []).filter((r) => accountSignalIds.has(r.signal_id));
+        const sorted = accountResponses.sort(
+          (a, b) => new Date(a.completed_at!).getTime() - new Date(b.completed_at!).getTime()
+        );
+        const viewableIds = new Set(sorted.slice(0, 3).map((r) => r.signal_id));
+        canViewResponse = viewableIds.has(signal.id);
       }
     }
   }
 
-  const response = Array.isArray(signal.responses)
-    ? signal.responses[0]
-    : signal.responses;
   const content = signal.generated_page_content as {
     intro_paragraph: string;
     questions: { question_text: string; options: string[] }[];
@@ -105,11 +116,11 @@ export default async function SignalDetailPage({
       </Link>
 
       <div className="max-w-2xl space-y-8">
-        {responseLimitExceeded && response ? (
+        {!canViewResponse && response ? (
           <div className="bg-amber-50 rounded-xl border border-amber-200 p-6">
             <h2 className="font-medium text-amber-900 mb-2">Response received</h2>
             <p className="text-amber-800 text-sm">
-              You&apos;ve exceeded your Signal limit for this month. Upgrade to Premium to view this response and all future responses.
+              You&apos;ve used your 3 free responses for this month. Upgrade to Premium to view this response.
             </p>
             <Link
               href="/dashboard/settings"
@@ -189,7 +200,7 @@ export default async function SignalDetailPage({
           </div>
         )}
 
-        {response && !responseLimitExceeded && (
+        {response && canViewResponse && (
           <>
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="font-medium text-gray-900 mb-4">

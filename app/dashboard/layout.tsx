@@ -45,12 +45,21 @@ export default async function DashboardLayout({
         .eq("account_id", profile.account_id);
       const userIds = accountUsers?.map((u) => u.id) ?? [];
       if (userIds.length > 0) {
-        const { count } = await admin
+        const { data: responses } = await admin
+          .from("responses")
+          .select("signal_id, completed_at")
+          .not("completed_at", "is", null)
+          .gte("completed_at", startOfMonth.toISOString());
+        const { data: accountSignals } = await admin
           .from("signals")
-          .select("id", { count: "exact", head: true })
-          .in("user_id", userIds)
-          .gte("created_at", startOfMonth.toISOString());
-        showLimitBanner = (count ?? 0) >= 3;
+          .select("id")
+          .in("user_id", userIds);
+        const accountSignalIds = new Set(accountSignals?.map((s) => s.id) ?? []);
+        const accountResponses = (responses ?? []).filter((r) => accountSignalIds.has(r.signal_id));
+        const sorted = accountResponses.sort(
+          (a, b) => new Date(a.completed_at!).getTime() - new Date(b.completed_at!).getTime()
+        );
+        showLimitBanner = sorted.length >= 4;
       }
     }
   }
@@ -105,11 +114,11 @@ export default async function DashboardLayout({
         <div className="bg-amber-50 border-b border-amber-200">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <p className="text-sm text-amber-800">
-              You&apos;ve exceeded your allotted Signal limit for this month. New responses won&apos;t be visible until you upgrade.{" "}
+              You&apos;ve exceeded your Signal limit for this month.{" "}
               <Link href="/dashboard/settings" className="font-medium underline hover:text-amber-900">
                 Upgrade to Premium
               </Link>{" "}
-              for unlimited Signals and to view all responses.
+              for unlimited Signals.
             </p>
           </div>
         </div>

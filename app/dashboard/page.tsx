@@ -57,7 +57,8 @@ export default async function DashboardPage() {
     .eq("id", user!.id)
     .single();
 
-  let responseLimitExceeded = false;
+  let viewableSignalIds = new Set<string>();
+  let isPremium = false;
   if (profile?.account_id) {
     const admin = createAdminClient();
     const { data: account } = await admin
@@ -65,7 +66,8 @@ export default async function DashboardPage() {
       .select("plan")
       .eq("id", profile.account_id)
       .single();
-    if (account?.plan !== "premium") {
+    isPremium = account?.plan === "premium";
+    if (!isPremium) {
       const now = new Date();
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       const { data: accountUsers } = await admin
@@ -74,12 +76,21 @@ export default async function DashboardPage() {
         .eq("account_id", profile.account_id);
       const userIds = accountUsers?.map((u) => u.id) ?? [];
       if (userIds.length > 0) {
-        const { count } = await admin
+        const { data: accountSignals } = await admin
           .from("signals")
-          .select("id", { count: "exact", head: true })
-          .in("user_id", userIds)
-          .gte("created_at", startOfMonth.toISOString());
-        responseLimitExceeded = (count ?? 0) >= 3;
+          .select("id")
+          .in("user_id", userIds);
+        const accountSignalIds = new Set(accountSignals?.map((s) => s.id) ?? []);
+        const { data: responses } = await admin
+          .from("responses")
+          .select("signal_id, completed_at")
+          .not("completed_at", "is", null)
+          .gte("completed_at", startOfMonth.toISOString());
+        const accountResponses = (responses ?? []).filter((r) => accountSignalIds.has(r.signal_id));
+        const sorted = accountResponses.sort(
+          (a, b) => new Date(a.completed_at!).getTime() - new Date(b.completed_at!).getTime()
+        );
+        sorted.slice(0, 3).forEach((r) => viewableSignalIds.add(r.signal_id));
       }
     }
   }
@@ -192,8 +203,8 @@ export default async function DashboardPage() {
                         {formatStatus(signal.status)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 max-w-[200px] truncate" title={!responseLimitExceeded ? signal.responses?.[0]?.ai_summary ?? undefined : undefined}>
-                      {responseLimitExceeded ? (
+                    <td className="px-4 py-3 text-sm text-gray-600 max-w-[200px] truncate" title={isPremium || viewableSignalIds.has(signal.id) ? signal.responses?.[0]?.ai_summary ?? undefined : undefined}>
+                      {!isPremium && signal.responses?.[0] && !viewableSignalIds.has(signal.id) ? (
                         <Link href="/dashboard/settings" className="text-amber-600 hover:underline">
                           Upgrade to view
                         </Link>
@@ -204,7 +215,7 @@ export default async function DashboardPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {responseLimitExceeded ? (
+                      {!isPremium && signal.responses?.[0] && !viewableSignalIds.has(signal.id) ? (
                         <Link href="/dashboard/settings" className="text-amber-600 hover:underline">
                           Upgrade to view
                         </Link>

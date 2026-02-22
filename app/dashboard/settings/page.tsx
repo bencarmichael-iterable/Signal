@@ -84,7 +84,7 @@ export default async function SettingsPage({
     teams = teamRows ?? [];
   }
 
-  let signalsUsed = 0;
+  let responsesReceived = 0;
   let daysLeftInMonth = 0;
   if (accountId) {
     const now = new Date();
@@ -97,12 +97,21 @@ export default async function SettingsPage({
       .eq("account_id", accountId);
     const userIds = accountUsers?.map((u) => u.id) ?? [];
     if (userIds.length > 0) {
-      const { count } = await admin
+      const { data: accountSignals } = await admin
         .from("signals")
-        .select("id", { count: "exact", head: true })
-        .in("user_id", userIds)
-        .gte("created_at", startOfMonth.toISOString());
-      signalsUsed = count ?? 0;
+        .select("id")
+        .in("user_id", userIds);
+      const accountSignalIds = new Set(accountSignals?.map((s) => s.id) ?? []);
+      const signalIds = Array.from(accountSignalIds);
+      if (signalIds.length > 0) {
+        const { count } = await admin
+          .from("responses")
+          .select("id", { count: "exact", head: true })
+          .in("signal_id", signalIds)
+          .not("completed_at", "is", null)
+          .gte("completed_at", startOfMonth.toISOString());
+        responsesReceived = count ?? 0;
+      }
     }
   }
 
@@ -118,7 +127,7 @@ export default async function SettingsPage({
         prompts={prompts}
         teams={teams}
         accountPlan={account?.plan ?? "free"}
-        signalsUsed={signalsUsed}
+        signalsUsed={responsesReceived}
         daysLeftInMonth={daysLeftInMonth}
         upgraded={params.upgraded === "1"}
         canceled={params.canceled === "1"}

@@ -48,27 +48,27 @@ export default function BillingSection({ plan, signalsUsed, signalsLimit, daysLe
         <p className="text-sm text-gray-500 mb-4">
           {isPremium
             ? "Unlimited Signals, priority support"
-            : "3 Signals per month"}
+            : "3 responses per month (viewable for free)"}
         </p>
 
         {!isPremium && (
           <>
             <div className="mb-6 p-4 bg-gray-50 rounded-lg">
               <p className="text-sm text-gray-700">
-                <span className="font-medium">{signalsUsed}</span> of {signalsLimit} Signals used this month
+                <span className="font-medium">{signalsUsed}</span> of {signalsLimit} responses received this month
               </p>
               <p className="text-sm text-gray-500 mt-1">
                 {daysLeftInMonth} days left in the month
               </p>
               {signalsUsed >= signalsLimit && (
                 <p className="text-sm text-amber-700 mt-2 font-medium">
-                  New responses won&apos;t be visible until you upgrade.
+                  Upgrade to view responses beyond your limit.
                 </p>
               )}
             </div>
             <div>
             <p className="text-sm text-gray-600 mb-4">
-              Upgrade to Premium for unlimited Signals and priority support. Responses to your Signals won&apos;t be visible until you upgrade if you&apos;ve exceeded your limit.
+              Upgrade to Premium for unlimited Signals and priority support. You can view your first 3 responses each month for free; upgrade to view more.
             </p>
               <button
               type="button"
