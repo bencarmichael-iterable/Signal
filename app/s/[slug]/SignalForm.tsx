@@ -65,13 +65,31 @@ export default function SignalForm({
   const [fetchingNext, setFetchingNext] = useState(false);
   const [showOpenField, setShowOpenField] = useState(false);
   const [finalOpenFieldPrompt, setFinalOpenFieldPrompt] = useState<string | null>(null);
+  const [otherText, setOtherText] = useState<Record<number, string>>({});
+  const [otherSelectedForStep, setOtherSelectedForStep] = useState<number | null>(null);
+  const [showFinalNote, setShowFinalNote] = useState(false);
+  const [finalNoteText, setFinalNoteText] = useState("");
   const hasLandingContent = landingH1 || (valuePropBullets && valuePropBullets.length > 0) || dealSummary;
   const [showQuestions, setShowQuestions] = useState(!hasLandingContent);
   const questionsRef = useRef<HTMLDivElement>(null);
 
   const currentQuestion = questions[step];
   const isLastQuestion = step === questions.length - 1;
-  const progress = ((step + 1) / Math.max(questions.length, 6)) * 100;
+  // When dynamic, we don't know total questions - use step-based progress (no "X of Y")
+  const progress = dynamic
+    ? Math.min(85, (step + 1) * 25)
+    : ((step + 1) / Math.max(questions.length, 1)) * 100;
+
+  const interpolateName = (text: string) => {
+    if (!text) return text;
+    const hasPlaceholder = /\{\{firstName\}\}/i.test(text);
+    const withName = text.replace(/\{\{firstName\}\}/gi, prospectName);
+    // Fallback for older content without {{firstName}}: prepend name
+    if (prospectName && !hasPlaceholder && !withName.toLowerCase().startsWith(prospectName.toLowerCase())) {
+      return `${prospectName}, ${withName}`;
+    }
+    return withName;
+  };
 
   useEffect(() => {
     fetch("/api/signals/track-open", {
@@ -83,8 +101,13 @@ export default function SignalForm({
 
   function handleMultiSelectContinue() {
     const selected = multiSelectSelections[step];
-    const answer = selected?.size ? [...selected].join(", ") : "";
-    if (!answer) return;
+    if (!selected?.size) return;
+    let parts = [...selected];
+    if (parts.includes("Other") && otherText[step]?.trim()) {
+      parts = parts.filter((p) => p !== "Other");
+      parts.push(`Other: ${otherText[step].trim()}`);
+    }
+    const answer = parts.join(", ");
     const newAnswers = { ...answers, [step]: answer };
     setAnswers(newAnswers);
     void advanceAfterAnswer(newAnswers, answer);
@@ -92,6 +115,10 @@ export default function SignalForm({
 
   function handleOptionSelect(option: string) {
     const isMulti = currentQuestion?.multi_select;
+    if (option === "Other") {
+      setOtherSelectedForStep(step);
+      return;
+    }
     if (isMulti) {
       const prev = multiSelectSelections[step] ?? new Set<string>();
       const next = new Set(prev);
@@ -104,6 +131,16 @@ export default function SignalForm({
     const newAnswers = { ...answers, [step]: option };
     setAnswers(newAnswers);
     void advanceAfterAnswer(newAnswers, option);
+  }
+
+  function handleOtherSubmit() {
+    const text = otherText[step]?.trim() || "";
+    const answer = text ? `Other: ${text}` : "Other";
+    const newAnswers = { ...answers, [step]: answer };
+    setAnswers(newAnswers);
+    setOtherSelectedForStep(null);
+    setOtherText((prev) => ({ ...prev, [step]: "" }));
+    void advanceAfterAnswer(newAnswers, answer);
   }
 
   async function advanceAfterAnswer(newAnswers: Record<number, string>, answer: string) {
@@ -172,6 +209,7 @@ export default function SignalForm({
   }
 
   if (submitted) {
+    const repFirstName = repName.split(" ")[0] ?? repName;
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
         <div className="max-w-md w-full text-center">
@@ -186,15 +224,16 @@ export default function SignalForm({
             {repCompany && ` from ${repCompany}`} will appreciate the honesty.
             We won&apos;t follow up unless there&apos;s a real reason to do so.
           </p>
-          {(repEmail || repLinkedinUrl) && (
+          {!showFinalNote && (repEmail || repLinkedinUrl) && (
             <div className="space-y-3">
               {repEmail && (
-                <a
-                  href={`mailto:${repEmail}`}
+                <button
+                  type="button"
+                  onClick={() => setShowFinalNote(true)}
                   className="block w-full py-4 px-6 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition-colors"
                 >
-                  Reply to {repName}&apos;s email
-                </a>
+                  Leave a final note for {repFirstName}
+                </button>
               )}
               {repLinkedinUrl && (
                 <a
@@ -202,6 +241,50 @@ export default function SignalForm({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full py-4 px-6 border-2 border-primary text-primary font-semibold rounded-xl hover:bg-primary/5 transition-colors"
+                >
+                  Connect on LinkedIn
+                </a>
+              )}
+            </div>
+          )}
+          {showFinalNote && repEmail && (
+            <div className="text-left space-y-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Leave a personal note for {repFirstName}
+              </label>
+              <textarea
+                value={finalNoteText}
+                onChange={(e) => setFinalNoteText(e.target.value)}
+                rows={4}
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
+                placeholder="Type your note here..."
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const subject = encodeURIComponent("Re: Signal");
+                    const body = encodeURIComponent(finalNoteText.trim() || " ");
+                    window.location.href = `mailto:${repEmail}?subject=${subject}&body=${body}`;
+                  }}
+                  className="flex-1 py-4 px-6 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 transition-colors"
+                >
+                  Email note to {repFirstName}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowFinalNote(false)}
+                  className="py-4 px-4 text-gray-600 hover:text-gray-900"
+                >
+                  Cancel
+                </button>
+              </div>
+              {repLinkedinUrl && (
+                <a
+                  href={repLinkedinUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full py-3 text-center text-accent font-medium hover:underline"
                 >
                   Connect on LinkedIn
                 </a>
@@ -296,13 +379,16 @@ export default function SignalForm({
         {/* Landing: H1 + bullets + CTA (all signal types) */}
         {(landingH1 || valuePropBullets?.length || dealSummary) && !showQuestions && (
           <div className="mb-10">
+            {prospectName && (
+              <p className="text-lg text-gray-700 mb-2">Hi {prospectName},</p>
+            )}
             {landingH1 && (
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 leading-tight">
-                {landingH1}
+                {interpolateName(landingH1)}
               </h1>
             )}
             {dealSummary && (
-              <p className="text-gray-700 mb-6 leading-relaxed">{dealSummary}</p>
+              <p className="text-gray-700 mb-6 leading-relaxed">{interpolateName(dealSummary)}</p>
             )}
             {valuePropBullets && valuePropBullets.length > 0 && (
               <ul className="space-y-3 mb-8">
@@ -337,16 +423,21 @@ export default function SignalForm({
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-sm text-gray-500">
-            Question {step + 1} of {questions.length}
-            {questions.length <= 4 && " · ~30 seconds"}
-          </p>
+          {!dynamic && (
+            <p className="text-sm text-gray-500">
+              Question {step + 1} of {questions.length}
+              {questions.length <= 4 && " · ~30 seconds"}
+            </p>
+          )}
+          {dynamic && (
+            <p className="text-sm text-gray-500">~30 seconds</p>
+          )}
         </div>
 
         {/* Intro (first step only) */}
         {step === 0 && (
           <p className="text-gray-700 text-lg mb-8 leading-relaxed">
-            {introParagraph}
+            {interpolateName(introParagraph)}
           </p>
         )}
 
@@ -357,11 +448,13 @@ export default function SignalForm({
               {currentQuestion.question_text}
             </h2>
             <div className="space-y-3">
-              {currentQuestion.options.map((option) => {
+              {[...currentQuestion.options, ...(currentQuestion.options.includes("Other") ? [] : ["Other"])].map((option) => {
                 const isMulti = currentQuestion.multi_select;
                 const isSelected = isMulti
                   ? (multiSelectSelections[step]?.has(option) ?? false)
-                  : answers[step] === option;
+                  : option === "Other"
+                    ? otherSelectedForStep === step
+                    : answers[step] === option;
                 return (
                   <button
                     key={option}
@@ -386,6 +479,40 @@ export default function SignalForm({
                 );
               })}
             </div>
+            {/* Other option: open-text when selected (single-select) */}
+            {otherSelectedForStep === step && !currentQuestion.multi_select && (
+              <div className="mt-4 space-y-3">
+                <label className="block text-sm text-gray-600">Please elaborate (optional)</label>
+                <textarea
+                  value={otherText[step] ?? ""}
+                  onChange={(e) => setOtherText((prev) => ({ ...prev, [step]: e.target.value }))}
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
+                  placeholder="Add any details you'd like to share..."
+                />
+                <button
+                  type="button"
+                  onClick={handleOtherSubmit}
+                  disabled={fetchingNext}
+                  className="w-full py-4 bg-primary text-white font-semibold rounded-xl hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Continue
+                </button>
+              </div>
+            )}
+            {/* Other option: open-text when selected (multi-select) */}
+            {currentQuestion.multi_select && multiSelectSelections[step]?.has("Other") && (
+              <div className="mt-4 space-y-2">
+                <label className="block text-sm text-gray-600">Please elaborate on &quot;Other&quot; (optional)</label>
+                <textarea
+                  value={otherText[step] ?? ""}
+                  onChange={(e) => setOtherText((prev) => ({ ...prev, [step]: e.target.value }))}
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-accent focus:border-accent"
+                  placeholder="Add any details..."
+                />
+              </div>
+            )}
             {currentQuestion.multi_select && (
               <button
                 type="button"
