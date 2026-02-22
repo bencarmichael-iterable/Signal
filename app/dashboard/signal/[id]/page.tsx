@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -49,6 +50,38 @@ export default async function SignalDetailPage({
     notFound();
   }
 
+  let responseLimitExceeded = false;
+  const { data: profile } = await supabase
+    .from("users")
+    .select("account_id")
+    .eq("id", user.id)
+    .single();
+  if (profile?.account_id) {
+    const admin = createAdminClient();
+    const { data: account } = await admin
+      .from("accounts")
+      .select("plan")
+      .eq("id", profile.account_id)
+      .single();
+    if (account?.plan !== "premium") {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const { data: accountUsers } = await admin
+        .from("users")
+        .select("id")
+        .eq("account_id", profile.account_id);
+      const userIds = accountUsers?.map((u) => u.id) ?? [];
+      if (userIds.length > 0) {
+        const { count } = await admin
+          .from("signals")
+          .select("id", { count: "exact", head: true })
+          .in("user_id", userIds)
+          .gte("created_at", startOfMonth.toISOString());
+        responseLimitExceeded = (count ?? 0) >= 3;
+      }
+    }
+  }
+
   const response = Array.isArray(signal.responses)
     ? signal.responses[0]
     : signal.responses;
@@ -72,7 +105,21 @@ export default async function SignalDetailPage({
       </Link>
 
       <div className="max-w-2xl space-y-8">
-        {response?.ai_summary && (
+        {responseLimitExceeded && response ? (
+          <div className="bg-amber-50 rounded-xl border border-amber-200 p-6">
+            <h2 className="font-medium text-amber-900 mb-2">Response received</h2>
+            <p className="text-amber-800 text-sm">
+              You&apos;ve exceeded your Signal limit for this month. Upgrade to Premium to view this response and all future responses.
+            </p>
+            <Link
+              href="/dashboard/settings"
+              className="mt-4 inline-block px-4 py-2 rounded-lg font-medium text-white hover:opacity-90"
+              style={{ backgroundColor: "#4ECDC4" }}
+            >
+              Upgrade to Premium
+            </Link>
+          </div>
+        ) : response?.ai_summary ? (
           <div className="bg-green-50 rounded-xl border border-green-200 p-6">
             <h2 className="font-medium text-gray-900 mb-2">AI summary</h2>
             <p className="text-gray-700">{response.ai_summary}</p>
@@ -84,7 +131,7 @@ export default async function SignalDetailPage({
               </p>
             )}
           </div>
-        )}
+        ) : null}
 
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">
@@ -142,7 +189,7 @@ export default async function SignalDetailPage({
           </div>
         )}
 
-        {response && (
+        {response && !responseLimitExceeded && (
           <>
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h2 className="font-medium text-gray-900 mb-4">

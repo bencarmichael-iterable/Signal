@@ -84,6 +84,28 @@ export default async function SettingsPage({
     teams = teamRows ?? [];
   }
 
+  let signalsUsed = 0;
+  let daysLeftInMonth = 0;
+  if (accountId) {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    daysLeftInMonth = Math.max(0, endOfMonth.getDate() - now.getDate());
+    const { data: accountUsers } = await admin
+      .from("users")
+      .select("id")
+      .eq("account_id", accountId);
+    const userIds = accountUsers?.map((u) => u.id) ?? [];
+    if (userIds.length > 0) {
+      const { count } = await admin
+        .from("signals")
+        .select("id", { count: "exact", head: true })
+        .in("user_id", userIds)
+        .gte("created_at", startOfMonth.toISOString());
+      signalsUsed = count ?? 0;
+    }
+  }
+
   return (
     <div>
       <h1 className="text-2xl font-semibold text-gray-900 mb-2">Settings</h1>
@@ -96,6 +118,8 @@ export default async function SettingsPage({
         prompts={prompts}
         teams={teams}
         accountPlan={account?.plan ?? "free"}
+        signalsUsed={signalsUsed}
+        daysLeftInMonth={daysLeftInMonth}
         upgraded={params.upgraded === "1"}
         canceled={params.canceled === "1"}
       />

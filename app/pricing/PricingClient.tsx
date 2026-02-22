@@ -36,7 +36,8 @@ export default function PricingClient({ isLoggedIn }: Props) {
         <button
           onClick={handleUpgrade}
           disabled={loading}
-          className="block w-full py-3 text-center bg-white text-primary font-medium rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="block w-full py-3 text-center text-white font-medium rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ backgroundColor: "#4ECDC4" }}
         >
           {loading ? "Redirecting..." : "Upgrade to Premium"}
         </button>
@@ -55,7 +56,8 @@ export default function PricingClient({ isLoggedIn }: Props) {
   return (
     <Link
       href="/signup"
-      className="block w-full py-3 text-center bg-white text-primary font-medium rounded-lg hover:bg-gray-100"
+      className="block w-full py-3 text-center text-white font-medium rounded-lg hover:opacity-90"
+      style={{ backgroundColor: "#4ECDC4" }}
     >
       Sign up for Premium
     </Link>

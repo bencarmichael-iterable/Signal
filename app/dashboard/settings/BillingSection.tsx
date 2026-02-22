@@ -4,10 +4,13 @@ import { useState } from "react";
 
 type Props = {
   plan: string;
+  signalsUsed: number;
+  signalsLimit: number;
+  daysLeftInMonth: number;
   onUpgrade: () => void;
 };
 
-export default function BillingSection({ plan, onUpgrade }: Props) {
+export default function BillingSection({ plan, signalsUsed, signalsLimit, daysLeftInMonth, onUpgrade }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -42,29 +45,45 @@ export default function BillingSection({ plan, onUpgrade }: Props) {
         <p className="text-2xl font-bold text-gray-900 mb-1">
           {isPremium ? "Premium" : "Free"}
         </p>
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-sm text-gray-500 mb-4">
           {isPremium
             ? "Unlimited Signals, priority support"
             : "3 Signals per month"}
         </p>
 
         {!isPremium && (
-          <div>
+          <>
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm text-gray-700">
+                <span className="font-medium">{signalsUsed}</span> of {signalsLimit} Signals used this month
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                {daysLeftInMonth} days left in the month
+              </p>
+              {signalsUsed >= signalsLimit && (
+                <p className="text-sm text-amber-700 mt-2 font-medium">
+                  New responses won&apos;t be visible until you upgrade.
+                </p>
+              )}
+            </div>
+            <div>
             <p className="text-sm text-gray-600 mb-4">
-              Upgrade to Premium for unlimited Signals and priority support.
+              Upgrade to Premium for unlimited Signals and priority support. Responses to your Signals won&apos;t be visible until you upgrade if you&apos;ve exceeded your limit.
             </p>
-            <button
+              <button
               type="button"
               onClick={handleUpgrade}
               disabled={loading}
-              className="px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-3 text-white font-medium rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: "#4ECDC4" }}
             >
               {loading ? "Redirecting..." : "Upgrade to Premium — $29/mo"}
             </button>
             {error && (
               <p className="mt-3 text-sm text-red-600">{error}</p>
             )}
-          </div>
+            </div>
+          </>
         )}
 
         {isPremium && (

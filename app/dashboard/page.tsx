@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import Link from "next/link";
 import CreateSignalDropdown from "./CreateSignalDropdown";
 
@@ -52,9 +53,36 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase
     .from("users")
-    .select("full_name")
+    .select("full_name, account_id")
     .eq("id", user!.id)
     .single();
+
+  let responseLimitExceeded = false;
+  if (profile?.account_id) {
+    const admin = createAdminClient();
+    const { data: account } = await admin
+      .from("accounts")
+      .select("plan")
+      .eq("id", profile.account_id)
+      .single();
+    if (account?.plan !== "premium") {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const { data: accountUsers } = await admin
+        .from("users")
+        .select("id")
+        .eq("account_id", profile.account_id);
+      const userIds = accountUsers?.map((u) => u.id) ?? [];
+      if (userIds.length > 0) {
+        const { count } = await admin
+          .from("signals")
+          .select("id", { count: "exact", head: true })
+          .in("user_id", userIds)
+          .gte("created_at", startOfMonth.toISOString());
+        responseLimitExceeded = (count ?? 0) >= 3;
+      }
+    }
+  }
 
   const firstName =
     (profile?.full_name || user?.user_metadata?.full_name || user?.user_metadata?.name || "")
@@ -164,15 +192,27 @@ export default async function DashboardPage() {
                         {formatStatus(signal.status)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 max-w-[200px] truncate" title={signal.responses?.[0]?.ai_summary ?? undefined}>
-                      {signal.responses?.[0]?.ai_summary
-                        ? signal.responses[0].ai_summary.split(/[.!?]/)[0] + (signal.responses[0].ai_summary.includes(".") ? "." : "")
-                        : "-"}
+                    <td className="px-4 py-3 text-sm text-gray-600 max-w-[200px] truncate" title={!responseLimitExceeded ? signal.responses?.[0]?.ai_summary ?? undefined : undefined}>
+                      {responseLimitExceeded ? (
+                        <Link href="/dashboard/settings" className="text-amber-600 hover:underline">
+                          Upgrade to view
+                        </Link>
+                      ) : signal.responses?.[0]?.ai_summary ? (
+                        signal.responses[0].ai_summary.split(/[.!?]/)[0] + (signal.responses[0].ai_summary.includes(".") ? "." : "")
+                      ) : (
+                        "-"
+                      )}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {signal.responses?.[0]?.ai_recommendation
-                        ? formatRecommendation(signal.responses[0].ai_recommendation)
-                        : "-"}
+                      {responseLimitExceeded ? (
+                        <Link href="/dashboard/settings" className="text-amber-600 hover:underline">
+                          Upgrade to view
+                        </Link>
+                      ) : signal.responses?.[0]?.ai_recommendation ? (
+                        formatRecommendation(signal.responses[0].ai_recommendation)
+                      ) : (
+                        "-"
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <Link
