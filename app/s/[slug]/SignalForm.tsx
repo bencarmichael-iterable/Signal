@@ -347,12 +347,12 @@ export default function SignalForm({
               )}
             </div>
           </div>
-          {(prospectLogoUrl || prospectCompany) && (
+          {(prospectLogoUrl || prospectCompany || prospectName) && (
             <div className="mt-4 pt-4 border-t border-gray-100">
               <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">
-                For
+                For {prospectName && prospectCompany ? `${prospectName} at ${prospectCompany}` : prospectName || prospectCompany}
               </p>
-              {prospectWebsiteUrl ? (
+              {(prospectLogoUrl || prospectCompany) && (prospectWebsiteUrl ? (
                 <a
                   href={prospectWebsiteUrl}
                   target="_blank"
@@ -371,24 +371,23 @@ export default function SignalForm({
                 </a>
               ) : (
                 <span className="font-medium text-gray-900">{prospectCompany}</span>
-              )}
+              ))}
             </div>
           )}
         </div>
 
-        {/* Landing: H1 + bullets + CTA (all signal types) */}
+        {/* Landing: single greeting line + body + bullets + CTA (Option A) */}
         {(landingH1 || valuePropBullets?.length || dealSummary) && !showQuestions && (
           <div className="mb-10">
-            {prospectName && (
-              <p className="text-lg text-gray-700 mb-2">Hi {prospectName},</p>
-            )}
             {landingH1 && (
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 leading-tight">
-                {interpolateName(landingH1)}
+                {prospectName
+                  ? `Hi ${prospectName}, ${(landingH1 || "").replace(/\{\{firstName\}\}\s*,?\s*/gi, "").trim() || landingH1}`
+                  : interpolateName(landingH1)}
               </h1>
             )}
             {dealSummary && (
-              <p className="text-gray-700 mb-6 leading-relaxed">{interpolateName(dealSummary)}</p>
+              <p className="text-gray-700 mb-6 leading-relaxed">{dealSummary}</p>
             )}
             {valuePropBullets && valuePropBullets.length > 0 && (
               <ul className="space-y-3 mb-8">

@@ -12,8 +12,8 @@ const PROMPTS: Record<string, string> = {
 The tone must be: Warm, human, disarming, zero sales pressure, genuinely curious. Brief - respect the prospect's time.
 
 Generate from deal context:
-1. landing_h1: A warm, disarming headline question. MUST start with {{firstName}} so we can personalize (e.g. "{{firstName}}, have a quick moment to share what happened?" or "{{firstName}}, still interested in moving forward?"). One short question, no period.
-2. deal_summary: 2-3 sentences summarising what has happened in this deal so far. Include: what was discussed/pitched, where things reached, and where they stalled. Write for the prospect so they recognise the context.
+1. landing_h1: A warm, disarming headline question. Do NOT include the prospect's name (e.g. "have a quick moment to share what happened?" or "still interested in moving forward?"). One short question, no period.
+2. deal_summary: 2-3 sentences summarising what has happened in this deal so far. Do NOT start with the prospect's name or "Hi [name]" - start directly with context (e.g. "We've been exploring how..."). Include: what was discussed/pitched, where things reached, and where they stalled.
 3. value_prop_bullets: Array of 2-4 bullet points. Key deal context or what the rep hopes to understand. Keep each bullet one short line. Example: ["We discussed [solution] and next steps", "Things went quiet after [stage]", "Just curious where things stand"].
 4. intro_paragraph: 2-3 sentences using the prospect's first name, acknowledging the conversation went quiet, and setting expectations ("takes 45 seconds, no pitch, just curious").
 5. first_question: { question_text, options (4-5), multi_select?: true }
@@ -27,8 +27,8 @@ Return ONLY valid JSON: landing_h1, deal_summary, value_prop_bullets, intro_para
 Focus on: competitors in the mix, where they're winning/losing, experience so far, features/pricing/support comparison. Tone: warm, curious, no pressure.
 
 Generate:
-1. landing_h1: A warm headline question. MUST start with {{firstName}} (e.g. "{{firstName}}, quick pulse check on our conversation?" or "{{firstName}}, how's the evaluation going?"). One short question, no period.
-2. deal_summary: 2-3 sentences on the deal context - what's been discussed, current stage, who's involved.
+1. landing_h1: A warm headline question. Do NOT include the prospect's name (e.g. "quick pulse check on our conversation?" or "how's the evaluation going?"). One short question, no period.
+2. deal_summary: 2-3 sentences on the deal context. Do NOT start with the prospect's name or "Hi [name]" - start directly with context. Include: what's been discussed, current stage, who's involved.
 3. value_prop_bullets: Array of 2-4 bullet points. Key deal context or what we're trying to understand. Each bullet one short line.
 4. intro_paragraph: 2-3 sentences, prospect's first name, frame as a quick pulse check ("45 seconds").
 5. first_question: { question_text, options (4-5), multi_select?: true } - discovery-style, competitor/experience focused.
@@ -42,8 +42,8 @@ Return ONLY valid JSON: landing_h1, deal_summary, value_prop_bullets, intro_para
 Focus on: current solution, pain points, contract expiry, budget timing. Tone: warm, helpful, introduce value prop. No "survey" language.
 
 Generate:
-1. landing_h1: A compelling headline question. MUST start with {{firstName}} (e.g. "{{firstName}}, in the market for Marketing Automation?" or "{{firstName}}, exploring customer engagement platforms?"). One short question, no period.
-2. deal_summary: 2-3 sentences introducing the company and why they're reaching out. Use landing_intro and value_prop context.
+1. landing_h1: A compelling headline question. Do NOT include the prospect's name (e.g. "in the market for Marketing Automation?" or "exploring customer engagement platforms?"). One short question, no period.
+2. deal_summary: 2-3 sentences introducing the company and why they're reaching out. Do NOT start with the prospect's name or "Hi [name]" - start directly with context. Use landing_intro and value_prop context.
 3. value_prop_bullets: Array of 3-5 bullet points. Combine value proposition + key customers/social proof. Each bullet one short line. Example: ["Cross-channel engagement at scale", "Trusted by Netflix, Spotify, and 1000+ brands", "Personalization that drives revenue"].
 4. intro_paragraph: 2-3 sentences, prospect's first name, introduce the rep/company, set expectations ("takes 45 seconds").
 5. first_question: { question_text, options (4-5), multi_select?: true } - discovery (e.g. "What solution are you using today?", "Any pain points?").
