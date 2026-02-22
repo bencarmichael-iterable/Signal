@@ -3,7 +3,12 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { redirect } from "next/navigation";
 import SettingsForm from "./SettingsForm";
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ upgraded?: string; canceled?: string }>;
+}) {
+  const params = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -54,7 +59,7 @@ export default async function SettingsPage() {
   if (accountId) {
     const { data: acc } = await admin
       .from("accounts")
-      .select("id, name, product_description, differentiators")
+      .select("id, name, product_description, differentiators, plan")
       .eq("id", accountId)
       .single();
     account = acc;
@@ -90,6 +95,9 @@ export default async function SettingsPage() {
         account={account}
         prompts={prompts}
         teams={teams}
+        accountPlan={account?.plan ?? "free"}
+        upgraded={params.upgraded === "1"}
+        canceled={params.canceled === "1"}
       />
     </div>
   );

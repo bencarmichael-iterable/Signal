@@ -17,6 +17,12 @@ export default function LandingPage() {
             </Link>
             <div className="flex items-center gap-4">
               <Link
+                href="/pricing"
+                className="text-gray-600 hover:text-primary transition-colors"
+              >
+                Pricing
+              </Link>
+              <Link
                 href="/login"
                 className="text-gray-600 hover:text-primary transition-colors"
               >
@@ -214,6 +220,9 @@ export default function LandingPage() {
             <span className="text-gray-500 text-sm">© Signal 2025</span>
           </div>
           <div className="flex items-center gap-6">
+            <Link href="/pricing" className="text-gray-500 text-sm hover:text-primary">
+              Pricing
+            </Link>
             <Link href="/login" className="text-gray-500 text-sm hover:text-primary">
               Log in
             </Link>

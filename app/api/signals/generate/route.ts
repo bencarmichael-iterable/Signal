@@ -137,6 +137,48 @@ export async function POST(req: Request) {
       .eq("id", user.id)
       .single();
 
+    if (!userProfile?.account_id) {
+      const { data: defaultAccount } = await admin
+        .from("accounts")
+        .select("id")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .single();
+      await admin.from("users").update({ account_id: defaultAccount?.id ?? null }).eq("id", user.id);
+    }
+
+    const accountId = userProfile?.account_id ?? (await admin.from("users").select("account_id").eq("id", user.id).single()).data?.account_id;
+    if (accountId) {
+      const { data: account } = await admin
+        .from("accounts")
+        .select("plan")
+        .eq("id", accountId)
+        .single();
+      if (account?.plan !== "premium") {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        const { data: accountUsers } = await admin
+          .from("users")
+          .select("id")
+          .eq("account_id", accountId);
+        const userIds = accountUsers?.map((u) => u.id) ?? [];
+        if (userIds.length > 0) {
+          const { count } = await admin
+            .from("signals")
+            .select("id", { count: "exact", head: true })
+            .in("user_id", userIds)
+            .gte("created_at", startOfMonth.toISOString());
+          if ((count ?? 0) >= 3) {
+            return NextResponse.json(
+              { error: "Free plan limit: 3 Signals per month. Upgrade to Premium for unlimited." },
+              { status: 403 }
+            );
+          }
+        }
+      }
+    }
+
     if (!userProfile) {
       const { data: defaultAccount } = await admin
         .from("accounts")

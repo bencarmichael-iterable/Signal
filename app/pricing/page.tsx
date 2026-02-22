@@ -1,7 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
+import { createClient } from "@/lib/supabase/server";
+import PricingClient from "./PricingClient";
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <div className="min-h-screen bg-white">
       <nav className="border-b border-gray-200">
@@ -11,10 +16,10 @@ export default function PricingPage() {
               <Image src="/signal-v2-logo-teal-accent.svg" alt="Signal" width={160} height={40} className="h-8 w-auto" />
             </Link>
             <div className="flex items-center gap-4">
-              <Link
-                href="/login"
-                className="text-gray-600 hover:text-primary"
-              >
+              <Link href="/pricing" className="text-gray-600 hover:text-primary">
+                Pricing
+              </Link>
+              <Link href="/login" className="text-gray-600 hover:text-primary">
                 Log in
               </Link>
               <Link
@@ -60,8 +65,11 @@ export default function PricingPage() {
             </Link>
           </div>
 
-          <div className="bg-primary rounded-2xl border-2 border-primary p-8 text-white">
-            <h2 className="text-xl font-semibold mb-2">Pro</h2>
+          <div className="bg-primary rounded-2xl border-2 border-primary p-8 text-white relative">
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white text-xs font-semibold px-3 py-1 rounded-full">
+              Most popular
+            </span>
+            <h2 className="text-xl font-semibold mb-2">Premium</h2>
             <p className="text-3xl font-bold mb-1">$29</p>
             <p className="text-primary-100 text-sm mb-6">per month</p>
             <ul className="space-y-3 mb-8">
@@ -75,12 +83,7 @@ export default function PricingPage() {
                 <span>✓</span> Priority support
               </li>
             </ul>
-            <Link
-              href="/signup"
-              className="block w-full py-3 text-center bg-white text-primary font-medium rounded-lg hover:bg-gray-100"
-            >
-              Upgrade to Pro
-            </Link>
+            <PricingClient isLoggedIn={!!user} />
           </div>
         </div>
       </div>

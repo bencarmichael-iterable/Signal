@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import TeamsSection from "./TeamsSection";
 import UsersSection from "./UsersSection";
+import BillingSection from "./BillingSection";
 
 const SIGNAL_TYPES = [
   { value: "deal_stalled", label: "Deal stalled" },
@@ -29,14 +30,17 @@ const PROMPT_KEYS: Record<string, { key: string; label: string; placeholder: str
 };
 
 type Props = {
-  account: { id: string; name: string; product_description: string | null; differentiators: string | null } | null;
+  account: { id: string; name: string; product_description: string | null; differentiators: string | null; plan?: string } | null;
   prompts: Record<string, Record<string, string>>;
   teams?: { id: string; name: string }[];
+  accountPlan?: string;
+  upgraded?: boolean;
+  canceled?: boolean;
 };
 
-export default function SettingsForm({ account, prompts, teams = [] }: Props) {
+export default function SettingsForm({ account, prompts, teams = [], accountPlan = "free", upgraded, canceled }: Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"company" | "prompts" | "teams" | "users">("company");
+  const [activeTab, setActiveTab] = useState<"company" | "prompts" | "teams" | "users" | "billing">(upgraded || canceled ? "billing" : "company");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -98,6 +102,16 @@ export default function SettingsForm({ account, prompts, teams = [] }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="max-w-2xl space-y-8">
+      {upgraded && (
+        <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
+          Welcome to Premium! You now have unlimited Signals.
+        </div>
+      )}
+      {canceled && (
+        <div className="bg-gray-50 border border-gray-200 text-gray-700 px-4 py-3 rounded-lg">
+          Checkout was canceled. You can upgrade anytime from the Billing tab.
+        </div>
+      )}
       <div className="flex gap-4 border-b border-gray-200">
         <button
           type="button"
@@ -142,6 +156,17 @@ export default function SettingsForm({ account, prompts, teams = [] }: Props) {
           }`}
         >
           Users
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("billing")}
+          className={`pb-3 px-1 font-medium border-b-2 -mb-px ${
+            activeTab === "billing"
+              ? "border-accent text-accent"
+              : "border-transparent text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          Billing
         </button>
       </div>
 
@@ -230,6 +255,10 @@ export default function SettingsForm({ account, prompts, teams = [] }: Props) {
         <div className="space-y-6">
           <UsersSection />
         </div>
+      )}
+
+      {activeTab === "billing" && (
+        <BillingSection plan={accountPlan} onUpgrade={() => router.refresh()} />
       )}
 
       {message && (

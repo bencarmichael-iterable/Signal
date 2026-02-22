@@ -89,6 +89,10 @@ export default function LoginPage() {
           <Link href="/signup" className="text-accent font-medium hover:underline">
             Sign up
           </Link>
+          {" · "}
+          <Link href="/pricing" className="text-accent font-medium hover:underline">
+            Pricing
+          </Link>
         </p>
       </div>
     </div>

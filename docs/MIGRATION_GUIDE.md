@@ -213,6 +213,17 @@ After the migration succeeds, we need to add `account_id` back to the Settings p
 
 ---
 
+## Additional migrations
+
+After the main migration, run these in order:
+
+- **010_linkedin_and_templates.sql** – Adds `linkedin_url` to users
+- **011_account_plan.sql** – Adds `plan` (free/premium), `stripe_customer_id`, `stripe_subscription_id` to accounts for billing
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for full deployment and env var documentation.
+
+---
+
 ## Troubleshooting
 
 | Error | Fix |
