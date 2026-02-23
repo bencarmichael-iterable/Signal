@@ -17,7 +17,7 @@ export default async function SettingsPage({
   const admin = createAdminClient();
   let { data: profile, error: profileError } = await admin
     .from("users")
-    .select("id, email, role, account_id")
+    .select("id, email, role, account_id, plan")
     .eq("id", user.id)
     .single();
 
@@ -25,7 +25,7 @@ export default async function SettingsPage({
   if (!profile && user.email) {
     const byEmail = await admin
       .from("users")
-      .select("id, email, role, account_id")
+      .select("id, email, role, account_id, plan")
       .eq("email", user.email)
       .single();
     if (byEmail.data) {
@@ -59,7 +59,7 @@ export default async function SettingsPage({
   if (accountId) {
     const { data: acc } = await admin
       .from("accounts")
-      .select("id, name, product_description, differentiators, plan")
+      .select("id, name, product_description, differentiators")
       .eq("id", accountId)
       .single();
     account = acc;
@@ -86,33 +86,23 @@ export default async function SettingsPage({
 
   let responsesReceived = 0;
   let daysLeftInMonth = 0;
-  if (accountId) {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    daysLeftInMonth = Math.max(0, endOfMonth.getDate() - now.getDate());
-    const { data: accountUsers } = await admin
-      .from("users")
-      .select("id")
-      .eq("account_id", accountId);
-    const userIds = accountUsers?.map((u) => u.id) ?? [];
-    if (userIds.length > 0) {
-      const { data: accountSignals } = await admin
-        .from("signals")
-        .select("id")
-        .in("user_id", userIds);
-      const accountSignalIds = new Set(accountSignals?.map((s) => s.id) ?? []);
-      const signalIds = Array.from(accountSignalIds);
-      if (signalIds.length > 0) {
-        const { count } = await admin
-          .from("responses")
-          .select("id", { count: "exact", head: true })
-          .in("signal_id", signalIds)
-          .not("completed_at", "is", null)
-          .gte("completed_at", startOfMonth.toISOString());
-        responsesReceived = count ?? 0;
-      }
-    }
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  daysLeftInMonth = Math.max(0, endOfMonth.getDate() - now.getDate());
+  const { data: userSignals } = await admin
+    .from("signals")
+    .select("id")
+    .eq("user_id", profile.id);
+  const userSignalIds = userSignals?.map((s) => s.id) ?? [];
+  if (userSignalIds.length > 0) {
+    const { count } = await admin
+      .from("responses")
+      .select("id", { count: "exact", head: true })
+      .in("signal_id", userSignalIds)
+      .not("completed_at", "is", null)
+      .gte("completed_at", startOfMonth.toISOString());
+    responsesReceived = count ?? 0;
   }
 
   return (
@@ -126,7 +116,7 @@ export default async function SettingsPage({
         account={account}
         prompts={prompts}
         teams={teams}
-        accountPlan={account?.plan ?? "free"}
+        userPlan={profile.plan ?? "free"}
         signalsUsed={responsesReceived}
         daysLeftInMonth={daysLeftInMonth}
         upgraded={params.upgraded === "1"}

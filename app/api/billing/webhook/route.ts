@@ -34,6 +34,7 @@ export async function POST(req: Request) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const accountId = session.metadata?.account_id;
+    const userId = session.metadata?.user_id;
     if (!accountId) {
       console.error("No account_id in session metadata");
       return NextResponse.json({ received: true });
@@ -49,13 +50,21 @@ export async function POST(req: Request) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", accountId);
+
+    if (userId) {
+      await admin
+        .from("users")
+        .update({ plan: "pro", updated_at: new Date().toISOString() })
+        .eq("id", userId);
+    }
   }
 
   if (event.type === "customer.subscription.deleted") {
     const subscription = event.data.object as Stripe.Subscription;
     const accountId = subscription.metadata?.account_id;
+    const userId = subscription.metadata?.user_id;
+    const admin = createAdminClient();
     if (!accountId) {
-      const admin = createAdminClient();
       const { data: acc } = await admin
         .from("accounts")
         .select("id")
@@ -72,7 +81,6 @@ export async function POST(req: Request) {
           .eq("id", acc.id);
       }
     } else {
-      const admin = createAdminClient();
       await admin
         .from("accounts")
         .update({
@@ -81,6 +89,12 @@ export async function POST(req: Request) {
           updated_at: new Date().toISOString(),
         })
         .eq("id", accountId);
+    }
+    if (userId) {
+      await admin
+        .from("users")
+        .update({ plan: "free", updated_at: new Date().toISOString() })
+        .eq("id", userId);
     }
   }
 

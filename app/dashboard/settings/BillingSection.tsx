@@ -14,7 +14,7 @@ export default function BillingSection({ plan, signalsUsed, signalsLimit, daysLe
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const isPremium = plan === "premium";
+  const isPremium = plan === "premium" || plan === "pro";
 
   async function handleUpgrade() {
     setLoading(true);

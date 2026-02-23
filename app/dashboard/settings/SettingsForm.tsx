@@ -30,17 +30,17 @@ const PROMPT_KEYS: Record<string, { key: string; label: string; placeholder: str
 };
 
 type Props = {
-  account: { id: string; name: string; product_description: string | null; differentiators: string | null; plan?: string } | null;
+  account: { id: string; name: string; product_description: string | null; differentiators: string | null } | null;
   prompts: Record<string, Record<string, string>>;
   teams?: { id: string; name: string }[];
-  accountPlan?: string;
+  userPlan?: string;
   signalsUsed?: number;
   daysLeftInMonth?: number;
   upgraded?: boolean;
   canceled?: boolean;
 };
 
-export default function SettingsForm({ account, prompts, teams = [], accountPlan = "free", signalsUsed = 0, daysLeftInMonth = 0, upgraded, canceled }: Props) {
+export default function SettingsForm({ account, prompts, teams = [], userPlan = "free", signalsUsed = 0, daysLeftInMonth = 0, upgraded, canceled }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"company" | "prompts" | "teams" | "users" | "billing">(upgraded || canceled ? "billing" : "company");
   const [loading, setLoading] = useState(false);
@@ -261,7 +261,7 @@ export default function SettingsForm({ account, prompts, teams = [], accountPlan
 
       {activeTab === "billing" && (
         <BillingSection
-          plan={accountPlan}
+          plan={userPlan}
           signalsUsed={signalsUsed}
           signalsLimit={3}
           daysLeftInMonth={daysLeftInMonth}

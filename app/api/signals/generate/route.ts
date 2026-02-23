@@ -133,7 +133,7 @@ export async function POST(req: Request) {
     const admin = createAdminClient();
     const { data: userProfile } = await admin
       .from("users")
-      .select("id, account_id")
+      .select("id, account_id, plan")
       .eq("id", user.id)
       .single();
 
@@ -147,35 +147,21 @@ export async function POST(req: Request) {
       await admin.from("users").update({ account_id: defaultAccount?.id ?? null }).eq("id", user.id);
     }
 
-    const accountId = userProfile?.account_id ?? (await admin.from("users").select("account_id").eq("id", user.id).single()).data?.account_id;
-    if (accountId) {
-      const { data: account } = await admin
-        .from("accounts")
-        .select("plan")
-        .eq("id", accountId)
-        .single();
-      if (account?.plan !== "premium") {
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        startOfMonth.setHours(0, 0, 0, 0);
-        const { data: accountUsers } = await admin
-          .from("users")
-          .select("id")
-          .eq("account_id", accountId);
-        const userIds = accountUsers?.map((u) => u.id) ?? [];
-        if (userIds.length > 0) {
-          const { count } = await admin
-            .from("signals")
-            .select("id", { count: "exact", head: true })
-            .in("user_id", userIds)
-            .gte("created_at", startOfMonth.toISOString());
-          if ((count ?? 0) >= 3) {
-            return NextResponse.json(
-              { error: "Free plan limit: 3 Signals per month. Upgrade to Premium for unlimited." },
-              { status: 403 }
-            );
-          }
-        }
+    const userPlan = userProfile?.plan ?? "free";
+    if (userPlan !== "premium" && userPlan !== "pro") {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      const { count } = await admin
+        .from("signals")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", startOfMonth.toISOString());
+      if ((count ?? 0) >= 3) {
+        return NextResponse.json(
+          { error: "Free plan limit: 3 Signals per month. Upgrade to Premium for unlimited." },
+          { status: 403 }
+        );
       }
     }
 

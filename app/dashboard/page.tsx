@@ -53,45 +53,33 @@ export default async function DashboardPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const { data: profile } = await supabase
     .from("users")
-    .select("full_name, account_id")
+    .select("full_name, account_id, plan")
     .eq("id", user!.id)
     .single();
 
   let viewableSignalIds = new Set<string>();
-  let isPremium = false;
-  if (profile?.account_id) {
+  const userPlan = profile?.plan ?? "free";
+  const isPremium = userPlan === "premium" || userPlan === "pro";
+  if (!isPremium) {
     const admin = createAdminClient();
-    const { data: account } = await admin
-      .from("accounts")
-      .select("plan")
-      .eq("id", profile.account_id)
-      .single();
-    isPremium = account?.plan === "premium";
-    if (!isPremium) {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const { data: accountUsers } = await admin
-        .from("users")
-        .select("id")
-        .eq("account_id", profile.account_id);
-      const userIds = accountUsers?.map((u) => u.id) ?? [];
-      if (userIds.length > 0) {
-        const { data: accountSignals } = await admin
-          .from("signals")
-          .select("id")
-          .in("user_id", userIds);
-        const accountSignalIds = new Set(accountSignals?.map((s) => s.id) ?? []);
-        const { data: responses } = await admin
-          .from("responses")
-          .select("signal_id, completed_at")
-          .not("completed_at", "is", null)
-          .gte("completed_at", startOfMonth.toISOString());
-        const accountResponses = (responses ?? []).filter((r) => accountSignalIds.has(r.signal_id));
-        const sorted = accountResponses.sort(
-          (a, b) => new Date(a.completed_at!).getTime() - new Date(b.completed_at!).getTime()
-        );
-        sorted.slice(0, 3).forEach((r) => viewableSignalIds.add(r.signal_id));
-      }
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const { data: userSignals } = await admin
+      .from("signals")
+      .select("id")
+      .eq("user_id", user!.id);
+    const userSignalIds = new Set(userSignals?.map((s) => s.id) ?? []);
+    if (userSignalIds.size > 0) {
+      const { data: responses } = await admin
+        .from("responses")
+        .select("signal_id, completed_at")
+        .not("completed_at", "is", null)
+        .gte("completed_at", startOfMonth.toISOString());
+      const userResponses = (responses ?? []).filter((r) => userSignalIds.has(r.signal_id));
+      const sorted = userResponses.sort(
+        (a, b) => new Date(a.completed_at!).getTime() - new Date(b.completed_at!).getTime()
+      );
+      sorted.slice(0, 3).forEach((r) => viewableSignalIds.add(r.signal_id));
     }
   }
 

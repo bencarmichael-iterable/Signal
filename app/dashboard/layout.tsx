@@ -19,7 +19,7 @@ export default async function DashboardLayout({
   const admin = await import("@/lib/supabase/admin").then((m) => m.createAdminClient());
   const { data: profile } = await admin
     .from("users")
-    .select("full_name, photo_url, role, account_id")
+    .select("full_name, photo_url, role, account_id, plan")
     .eq("id", user.id)
     .single();
 
@@ -30,37 +30,26 @@ export default async function DashboardLayout({
   const isManager = profile?.role === "manager" || profile?.role === "admin" || (managedTeams && managedTeams.length > 0);
 
   let showLimitBanner = false;
-  if (profile?.role === "admin" && profile?.account_id) {
-    const { data: account } = await admin
-      .from("accounts")
-      .select("plan")
-      .eq("id", profile.account_id)
-      .single();
-    if (account?.plan !== "premium") {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const { data: accountUsers } = await admin
-        .from("users")
-        .select("id")
-        .eq("account_id", profile.account_id);
-      const userIds = accountUsers?.map((u) => u.id) ?? [];
-      if (userIds.length > 0) {
-        const { data: responses } = await admin
-          .from("responses")
-          .select("signal_id, completed_at")
-          .not("completed_at", "is", null)
-          .gte("completed_at", startOfMonth.toISOString());
-        const { data: accountSignals } = await admin
-          .from("signals")
-          .select("id")
-          .in("user_id", userIds);
-        const accountSignalIds = new Set(accountSignals?.map((s) => s.id) ?? []);
-        const accountResponses = (responses ?? []).filter((r) => accountSignalIds.has(r.signal_id));
-        const sorted = accountResponses.sort(
-          (a, b) => new Date(a.completed_at!).getTime() - new Date(b.completed_at!).getTime()
-        );
-        showLimitBanner = sorted.length >= 4;
-      }
+  const userPlan = profile?.plan ?? "free";
+  if (userPlan !== "premium" && userPlan !== "pro") {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const { data: userSignals } = await admin
+      .from("signals")
+      .select("id")
+      .eq("user_id", user.id);
+    const userSignalIds = new Set(userSignals?.map((s) => s.id) ?? []);
+    if (userSignalIds.size > 0) {
+      const { data: responses } = await admin
+        .from("responses")
+        .select("signal_id, completed_at")
+        .not("completed_at", "is", null)
+        .gte("completed_at", startOfMonth.toISOString());
+      const userResponses = (responses ?? []).filter((r) => userSignalIds.has(r.signal_id));
+      const sorted = userResponses.sort(
+        (a, b) => new Date(a.completed_at!).getTime() - new Date(b.completed_at!).getTime()
+      );
+      showLimitBanner = sorted.length >= 4;
     }
   }
 

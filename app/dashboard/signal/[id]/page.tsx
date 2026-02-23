@@ -57,42 +57,31 @@ export default async function SignalDetailPage({
   let canViewResponse = true;
   const { data: profile } = await supabase
     .from("users")
-    .select("account_id")
+    .select("plan")
     .eq("id", user.id)
     .single();
-  if (profile?.account_id && response) {
+  const userPlan = profile?.plan ?? "free";
+  if ((userPlan !== "premium" && userPlan !== "pro") && response) {
     const admin = createAdminClient();
-    const { data: account } = await admin
-      .from("accounts")
-      .select("plan")
-      .eq("id", profile.account_id)
-      .single();
-    if (account?.plan !== "premium") {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const { data: accountUsers } = await admin
-        .from("users")
-        .select("id")
-        .eq("account_id", profile.account_id);
-      const userIds = accountUsers?.map((u) => u.id) ?? [];
-      if (userIds.length > 0) {
-        const { data: accountSignals } = await admin
-          .from("signals")
-          .select("id")
-          .in("user_id", userIds);
-        const accountSignalIds = new Set(accountSignals?.map((s) => s.id) ?? []);
-        const { data: responses } = await admin
-          .from("responses")
-          .select("signal_id, completed_at")
-          .not("completed_at", "is", null)
-          .gte("completed_at", startOfMonth.toISOString());
-        const accountResponses = (responses ?? []).filter((r) => accountSignalIds.has(r.signal_id));
-        const sorted = accountResponses.sort(
-          (a, b) => new Date(a.completed_at!).getTime() - new Date(b.completed_at!).getTime()
-        );
-        const viewableIds = new Set(sorted.slice(0, 3).map((r) => r.signal_id));
-        canViewResponse = viewableIds.has(signal.id);
-      }
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const { data: userSignals } = await admin
+      .from("signals")
+      .select("id")
+      .eq("user_id", user.id);
+    const userSignalIds = new Set(userSignals?.map((s) => s.id) ?? []);
+    if (userSignalIds.size > 0) {
+      const { data: responses } = await admin
+        .from("responses")
+        .select("signal_id, completed_at")
+        .not("completed_at", "is", null)
+        .gte("completed_at", startOfMonth.toISOString());
+      const userResponses = (responses ?? []).filter((r) => userSignalIds.has(r.signal_id));
+      const sorted = userResponses.sort(
+        (a, b) => new Date(a.completed_at!).getTime() - new Date(b.completed_at!).getTime()
+      );
+      const viewableIds = new Set(sorted.slice(0, 3).map((r) => r.signal_id));
+      canViewResponse = viewableIds.has(signal.id);
     }
   }
 

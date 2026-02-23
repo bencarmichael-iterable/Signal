@@ -53,9 +53,15 @@ export async function POST() {
       .eq("id", profile.account_id)
       .single();
 
-    if (account?.plan === "premium") {
+    const { data: userRow } = await admin
+      .from("users")
+      .select("plan")
+      .eq("id", user.id)
+      .single();
+
+    if (userRow?.plan === "pro" || userRow?.plan === "premium" || account?.plan === "premium") {
       return NextResponse.json(
-        { error: "Account is already on Premium" },
+        { error: "Already on Premium" },
         { status: 400 }
       );
     }
@@ -75,10 +81,12 @@ export async function POST() {
       cancel_url: `${baseUrl}/dashboard/settings?canceled=1`,
       metadata: {
         account_id: profile.account_id,
+        user_id: user.id,
       },
       subscription_data: {
         metadata: {
           account_id: profile.account_id,
+          user_id: user.id,
         },
       },
     };
